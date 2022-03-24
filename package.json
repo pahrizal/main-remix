@@ -14,8 +14,7 @@
     "dev:remix": "remix watch",
     "generate:css": "npx tailwindcss -o ./app/assets/styles/tailwind.css",
     "postinstall": "remix setup node",
-    "start": "cross-env NODE_ENV=production node ./build/index.js",
-    "heroku-postbuild": "npm run build"
+    "start": "cross-env NODE_ENV=production node ./build/index.js"
   },
   "dependencies": {
     "@remix-run/express": "^1.3.2",

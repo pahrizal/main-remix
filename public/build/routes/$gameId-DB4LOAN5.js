@@ -1,0 +1,1 @@
+import{c}from"/build/_shared/chunk-6AWONSVN.js";import{c as i,d,f as e,j as n,n as m}from"/build/_shared/chunk-G65EAHCX.js";e();e();var o=i(d());var p=()=>{let t=c(s=>s.socket.client),a=m(),r=n();return o.default.useEffect(()=>{t?t.emit("join",a.gameId):r("/")},[a.gameId,t,r]),o.default.createElement("div",null,"GameScreen")},f=p;export{f as default};
