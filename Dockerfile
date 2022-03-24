@@ -7,4 +7,4 @@ RUN unzip dist.zip
 RUN rm dist.zip
 RUN yarn install
 EXPOSE 3000
-ENTRYPOINT ["node", "index.js"]
+ENTRYPOINT ["node", "./build/index.js"]
