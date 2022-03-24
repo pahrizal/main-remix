@@ -11,12 +11,12 @@ import {
   ScrollRestoration,
 } from "remix";
 import { io as socketClient } from "socket.io-client";
-import animationStyles from "./assets/styles/animation.css";
-import appStyles from "./assets/styles/app.css";
-import tailwindStyles from "./assets/styles/tailwind.css";
+import animationStyles from "~/assets/styles/animation.css";
+import appStyles from "~/assets/styles/app.css";
+import tailwindStyles from "~/assets/styles/tailwind.css";
 import { AppState, initialAppState } from "./stores";
-import configureStore from "./stores/config";
-import { socketActions } from "./stores/socketState";
+import configureStore from "~/stores/config";
+import { socketActions } from "~/stores/socketState";
 
 export const links: LinksFunction = () => {
   return [
