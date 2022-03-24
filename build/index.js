@@ -386,7 +386,7 @@ var animation_default = "/build/_assets/animation-2KLKVNUX.css";
 var app_default = "/build/_assets/app-Q2D3FZV5.css";
 
 // app/assets/styles/tailwind.css
-var tailwind_default = "/build/_assets/tailwind-NZHFBXPL.css";
+var tailwind_default = "/build/_assets/tailwind-YCJBUPGB.css";
 
 // app/stores/index.ts
 init_react();
@@ -690,7 +690,7 @@ function Index() {
 
 // server-assets-manifest:@remix-run/dev/assets-manifest
 init_react();
-var assets_manifest_default = { "version": "591d2ea1", "entry": { "module": "/build/entry.client-RUNECLBG.js", "imports": ["/build/_shared/chunk-G65EAHCX.js"] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "module": "/build/root-BNBYRZQA.js", "imports": ["/build/_shared/chunk-A33U2VHE.js", "/build/_shared/chunk-6AWONSVN.js"], "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/$gameId": { "id": "routes/$gameId", "parentId": "root", "path": ":gameId", "index": void 0, "caseSensitive": void 0, "module": "/build/routes/$gameId-DB4LOAN5.js", "imports": void 0, "hasAction": false, "hasLoader": true, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/index": { "id": "routes/index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "module": "/build/routes/index-W5QZI7XY.js", "imports": void 0, "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false } }, "url": "/build/manifest-591D2EA1.js" };
+var assets_manifest_default = { "version": "ca49f080", "entry": { "module": "/build/entry.client-RUNECLBG.js", "imports": ["/build/_shared/chunk-G65EAHCX.js"] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "module": "/build/root-KBVCCKUC.js", "imports": ["/build/_shared/chunk-A33U2VHE.js", "/build/_shared/chunk-6AWONSVN.js"], "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/$gameId": { "id": "routes/$gameId", "parentId": "root", "path": ":gameId", "index": void 0, "caseSensitive": void 0, "module": "/build/routes/$gameId-DB4LOAN5.js", "imports": void 0, "hasAction": false, "hasLoader": true, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/index": { "id": "routes/index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "module": "/build/routes/index-W5QZI7XY.js", "imports": void 0, "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false } }, "url": "/build/manifest-CA49F080.js" };
 
 // server-entry-module:@remix-run/dev/server-build
 var entry = { module: entry_server_exports };
