@@ -1,0 +1,14 @@
+version: '3'
+services:
+    web:
+        image: main-remix:latest
+        container_name: 'main-remix'
+        hostname: main-remix
+        environment:
+            NODE_ENV: production
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - '3000:3000'
+        restart: always
