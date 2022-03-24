@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["browser-route-module:/Users/papuq/Work/main-remix/app/routes/index.tsx?browser", "../../../app/routes/index.tsx"],
-  "sourcesContent": ["export { default } from \"/Users/papuq/Work/main-remix/app/routes/index.tsx\";", "export default function Index() {\n  return (\n    <div className=\"flex flex-col items-center justify-center\">\n      <div className=\"flex flex-row\">\n        <div className=\"flex flex-row  animate-bounceInLeft\">\n          {\"Hello\".split(\"\").map((c, i) => (\n            <h1 key={i} className=\"font-virgil text-7xl hover:animate-rubber\">\n              {c}\n            </h1>\n          ))}\n        </div>\n        <h1 className=\"font-virgil text-4xl text-lime-400 bounceInRight\">\n          Main\n        </h1>\n      </div>\n    </div>\n  );\n}\n"],
-  "mappings": ";;;;;;AAAA;;;ACAA;AAAe,iBAAiB;AAC9B,SACE,oCAAC,OAAD;AAAA,IAAK,WAAU;AAAA,KACb,oCAAC,OAAD;AAAA,IAAK,WAAU;AAAA,KACb,oCAAC,OAAD;AAAA,IAAK,WAAU;AAAA,KACZ,QAAQ,MAAM,IAAI,IAAI,CAAC,GAAG,MACzB,oCAAC,MAAD;AAAA,IAAI,KAAK;AAAA,IAAG,WAAU;AAAA,KACnB,MAIP,oCAAC,MAAD;AAAA,IAAI,WAAU;AAAA,KAAmD;AAAA;",
-  "names": []
-}

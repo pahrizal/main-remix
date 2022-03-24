@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["browser-route-module:/Users/papuq/Work/main-remix/app/routes/$gameId.tsx?browser", "../../../app/routes/$gameId.tsx"],
-  "sourcesContent": ["export { default } from \"/Users/papuq/Work/main-remix/app/routes/$gameId.tsx\";", "const GameScreen = () => {\n  return <div>GameScreen</div>;\n};\n\nexport default GameScreen;\n"],
-  "mappings": ";;;;;;AAAA;;;ACAA;AAAA,IAAM,aAAa,MAAM;AACvB,SAAO,oCAAC,OAAD,MAAK;AAAA;AAGd,IAAO,iBAAQ;",
-  "names": []
-}
