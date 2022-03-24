@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["browser-route-module:/Users/papuq/Work/main-remix/app/routes/$gameId.tsx?browser", "../../../app/routes/$gameId.tsx"],
-  "sourcesContent": ["export { default } from \"/Users/papuq/Work/main-remix/app/routes/$gameId.tsx\";", "import React from \"react\";\nimport { useSelector } from \"react-redux\";\nimport { json, LoaderFunction, useLoaderData, useNavigate } from \"remix\";\nimport { AppState } from \"~/stores\";\nimport { printLog } from \"~/utils/helper\";\n\ntype GameData = {\n  gameId: string;\n};\nexport const loader: LoaderFunction = async ({ params }) => {\n  return json({ ...params });\n};\n\nconst GameScreen = () => {\n  const socket = useSelector((state: AppState) => state.socket.client);\n  const data = useLoaderData<GameData>();\n  const nav = useNavigate();\n  React.useEffect(() => {\n    if (!socket) {\n      nav(\"/\");\n    } else {\n      socket.emit(\"join\", data.gameId);\n    }\n  }, [data.gameId]);\n\n  return <div>GameScreen</div>;\n};\n\nexport default GameScreen;\n"],
-  "mappings": ";;;;;;;;;;;;AAAA;;;ACAA;AAAA,mBAAkB;AAalB,IAAM,aAAa,MAAM;AACvB,QAAM,SAAS,YAAY,CAAC,UAAoB,MAAM,OAAO;AAC7D,QAAM,OAAO;AACb,QAAM,MAAM;AACZ,uBAAM,UAAU,MAAM;AACpB,QAAI,CAAC,QAAQ;AACX,UAAI;AAAA,WACC;AACL,aAAO,KAAK,QAAQ,KAAK;AAAA;AAAA,KAE1B,CAAC,KAAK;AAET,SAAO,mDAAC,OAAD,MAAK;AAAA;AAGd,IAAO,iBAAQ;",
-  "names": []
-}

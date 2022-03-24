@@ -33,7 +33,7 @@ export default function Index() {
         src={playingCardBackground}
         alt="bg"
         width={512}
-        className="absolute bottom-0 right-0 opacity-20 bounceInUp"
+        className="-z-10 absolute bottom-0 right-0 opacity-20 bounceInUp"
       />
       <div className="flex flex-row">
         <RubberText text="Hello" rootClass="mr-8" />

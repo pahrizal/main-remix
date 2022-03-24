@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["browser-route-module:/Users/papuq/Work/main-remix/app/routes/$gameId.tsx?browser"],
-  "sourcesContent": ["export * from \"/Users/papuq/Work/main-remix/app/routes/$gameId.tsx\";"],
-  "mappings": ";;;;;AAAA;",
-  "names": []
-}

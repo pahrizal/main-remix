@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["browser-route-module:/Users/papuq/Work/main-remix/app/routes/$gameId.tsx?browser", "../../../app/routes/$gameId.tsx"],
-  "sourcesContent": ["export { default } from \"/Users/papuq/Work/main-remix/app/routes/$gameId.tsx\";", "import React from \"react\";\nimport { LoaderFunction } from \"remix\";\nimport { printLog } from \"~/utils/helper\";\n\nexport const loader: LoaderFunction = async ({ params }) => {\n  printLog(\"info\", \"GAME\", `joining room ID: ${params.gameId}`);\n  return null;\n};\n\nconst GameScreen = () => {\n  return <div>GameScreen</div>;\n};\n\nexport default GameScreen;\n"],
-  "mappings": ";;;;;;;AAAA;;;ACAA;AAAA,mBAAkB;AASlB,IAAM,aAAa,MAAM;AACvB,SAAO,mDAAC,OAAD,MAAK;AAAA;AAGd,IAAO,iBAAQ;",
-  "names": []
-}
