@@ -5,6 +5,9 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      screens: {
+        xs: "0px",
+      },
       keyframes: {
         rubber: {
           "from, to": {

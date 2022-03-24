@@ -83,7 +83,7 @@
   }
 }
 .bounceInUp {
-  animation: bounceInUp 1.5s ease-out;
+  animation: bounceInUp 1.5s both;
 }
 
 @keyframes bounceInRight {
@@ -183,6 +183,13 @@
 }
 .rubber {
   animation: rubber 1.5s both;
+}
+.rubber-infinite {
+      -webkit-animation-name: rubber;
+      -webkit-animation-duration: 10s;
+      -webkit-animation-iteration-count: infinite;
+      -webkit-animation-timing-function: linear;
+      -webkit-animation-delay: 0s;
 }
 
 .btn-anim-bg {

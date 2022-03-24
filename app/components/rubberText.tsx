@@ -5,15 +5,17 @@ type Props = {
   text?: string;
   bounceIn?: "left" | "right" | "up" | "down";
   className?: string;
+  rootClass?: string;
 };
 const RubberText: React.FC<Props> = ({
   text = "",
   bounceIn,
-  className = "font-virgil text-7xl hover:animate-rubber hover:text-lime-400 cursor-pointer",
+  rootClass = "",
+  className = "font-virgil xl:text-8xl lg:md:text-6xl text-4xl hover:animate-rubber hover:text-lime-400 cursor-pointer",
 }) => {
   return (
     <div
-      className={clsx("flex flex-row mr-8", {
+      className={clsx("flex flex-row", rootClass, {
         bounceInLeft: bounceIn === "left" || !bounceIn,
         bounceInRight: bounceIn === "right",
         bounceInUp: bounceIn === "up",
