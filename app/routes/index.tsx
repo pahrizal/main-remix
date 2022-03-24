@@ -36,7 +36,7 @@ export default function Index() {
       <div className="flex flex-row mt-8">
         <div className="mr-4 border-lime-500 border-2">
           <button
-            className="btn-anim-bg px-8 py-4 font-virgil text-slate-100 text-xl"
+            className="btn-anim-bg px-8 py-4 font-exo text-slate-100 text-xl"
             onClick={handleCreateGame}
           >
             <p>New Game</p>
@@ -44,12 +44,12 @@ export default function Index() {
         </div>
         <div className="flex flex-row border-2 border-lime-500">
           <input
-            className="h-100 bg-transparent outline-none px-4 text-lime-500 font-bold font-virgil"
+            className="h-100 bg-transparent outline-none px-4 text-lime-500 font-bold font-exo"
             placeholder="Enter game ID here"
             onChange={handleRoomInput}
           />
           <button
-            className="btn-anim-bg px-8 py-4 font-virgil text-slate-100 text-xl"
+            className="btn-anim-bg px-8 py-4 font-exo text-slate-100 text-xl"
             onClick={handleJoin}
           >
             <p>Join</p>

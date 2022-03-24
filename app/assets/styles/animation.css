@@ -195,10 +195,8 @@
 .btn-anim-bg > p {
   position: relative;
   /* z-index: 1; */
-  text-transform: uppercase;
   text-align: center;
   font-weight: 700;
-  /* Use transition property for smooth transition effect */
   transition: all 0.5s ease;
 }
 
@@ -211,7 +209,6 @@
   opacity: 1;
   width: 100%;
   height: 100%;
-  /* Use transition property for smooth transition effect */
   transition: all 0.3s ease;
 }
 
@@ -224,7 +221,6 @@
 }
 
 .btn-anim-bg:hover:before {
-  right: 0px;
-  /* Use transition property for smooth transition effect */
+  right:0px;
   transition: all 0.5s ease;
 }
