@@ -1,10 +1,9 @@
 FROM node:17
-RUN  apt-get update \
-    && apt-get install -y unzip
 WORKDIR /app
-COPY dist.zip .
-RUN unzip dist.zip
-RUN rm dist.zip
+ADD ./build .
+ADD ./public .
+ADD package.json .
+ADD yarn.lock .
 RUN yarn install
 EXPOSE 3000
 ENTRYPOINT ["node", "./build/index.js"]
