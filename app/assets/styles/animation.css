@@ -220,7 +220,7 @@
 }
 
 .btn-anim-bg:before {
-  right: -225px;
+  right: -100%;
 }
 .btn-anim-bg:hover {
   color: #10172A;

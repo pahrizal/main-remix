@@ -2,7 +2,7 @@ import { Reducer } from "redux";
 import { Socket } from "socket.io-client";
 import { ClientEvent } from "~/controllers/client";
 import { ThunkAction } from "./index";
-import uuid from "uuid";
+import { v4 as uuidV4 } from "uuid";
 import { SocketActions } from "./socketState";
 
 export interface GameState {
@@ -39,10 +39,18 @@ export type GameActions = SetCurrentGameId | SetPlayers;
 export const gameActions = {
   create: (): ThunkAction<GameActions | SocketActions> => {
     return async (dispatch, getState) => {
-      const newGameId = uuid.v1();
+      const newGameId = uuidV4();
       dispatch({
         type: GameActionsTypes.SET_CURRENT_GAME_ID,
         payload: newGameId,
+      });
+    };
+  },
+  join: (gameId: string): ThunkAction<GameActions | SocketActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_CURRENT_GAME_ID,
+        payload: gameId,
       });
     };
   },

@@ -3,19 +3,30 @@ import React from "react";
 import { useNavigate } from "remix";
 import RubberText from "~/components/rubberText";
 import playingCardBackground from "~/assets/images/playing-cards.png";
+import { useDispatch, useSelector } from "react-redux";
+import { gameActions } from "~/stores/gameState";
+import { AppState } from "~/stores";
 
 export default function Index() {
-  const [gameId, setGameId] = React.useState("");
+  const [joinId, setJoinId] = React.useState("");
+  const gameId = useSelector((state: AppState) => state.game.currentGameId);
+  const dispatch = useDispatch();
   const nav = useNavigate();
   const handleRoomInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     if (!value) return;
-    setGameId(value);
+    setJoinId(value);
   };
   const handleJoin = () => {
-    nav(gameId, { replace: true });
+    dispatch(gameActions.join(joinId));
   };
-  const handleCreateGame = () => {};
+  const handleCreateGame = () => {
+    dispatch(gameActions.create());
+  };
+  React.useEffect(() => {
+    if (!gameId) return;
+    nav(gameId);
+  }, [gameId]);
   return (
     <div className="flex flex-col overflow-hidden items-center justify-center">
       <img
@@ -44,7 +55,7 @@ export default function Index() {
       <div className="flex xs:flex-col sm:flex-col md:flex-row lg::flex-row xl:flex-row 2xl:flex-row mt-8 items-center">
         <div className="sm:mr-0 xs:mr-0 xl:mr-4 lg:mr-4 md:mr-4 border-lime-500 border-2 sm:w-full xs:w-full text-center xl:mb-0 lg:mb-0 md:mb-0 sm:mb-2 xs:mb-2">
           <button
-            className="btn-anim-bg px-4 py-2 font-exo text-slate-100 xl:text-xl lg:text-lg md:text-md text-sm"
+            className="btn-anim-bg sm:w-full xs:w-full px-4 py-2 font-exo text-slate-100 xl:text-xl lg:text-lg md:text-md text-sm"
             onClick={handleCreateGame}
           >
             <p>New Game</p>
