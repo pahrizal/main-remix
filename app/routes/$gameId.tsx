@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { json, LoaderFunction, useLoaderData, useNavigate } from "remix";
-import { AppState } from "~/stores";
+import { AppState } from "../stores";
 
 type GameData = {
   gameId: string;

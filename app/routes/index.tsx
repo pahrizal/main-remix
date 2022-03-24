@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import React from "react";
 import { useNavigate } from "remix";
-import RubberText from "~/components/rubberText";
-import playingCardBackground from "~/assets/images/playing-cards.png";
+import RubberText from "../components/rubberText";
+import playingCardBackground from "../assets/images/playing-cards.png";
 import { useDispatch, useSelector } from "react-redux";
-import { gameActions } from "~/stores/gameState";
-import { AppState } from "~/stores";
+import { gameActions } from "../stores/gameState";
+import { AppState } from "../stores";
 
 export default function Index() {
   const [joinId, setJoinId] = React.useState("");

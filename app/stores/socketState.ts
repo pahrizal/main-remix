@@ -1,6 +1,6 @@
 import { Reducer } from "redux";
 import { Socket } from "socket.io-client";
-import { ClientEvent } from "~/controllers/client";
+import { ClientEvent } from "../controllers/client";
 import { ThunkAction } from "./index";
 
 export interface SocketState {
@@ -47,9 +47,6 @@ export const socketActions = {
           type: SocketActionsTypes.SET_CONNECTED,
           payload: true,
         });
-      });
-      socket.on<ClientEvent>("update-input", (data) => {
-        onData && onData(data);
       });
 
       dispatch({

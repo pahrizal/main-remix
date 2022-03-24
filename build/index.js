@@ -460,9 +460,6 @@ var socketActions = {
           payload: true
         });
       });
-      socket.on("update-input", (data) => {
-        onData && onData(data);
-      });
       dispatch({
         type: SocketActionsTypes.SET_SOCKET,
         payload: socket
@@ -690,7 +687,7 @@ function Index() {
 
 // server-assets-manifest:@remix-run/dev/assets-manifest
 init_react();
-var assets_manifest_default = { "version": "ca49f080", "entry": { "module": "/build/entry.client-RUNECLBG.js", "imports": ["/build/_shared/chunk-G65EAHCX.js"] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "module": "/build/root-KBVCCKUC.js", "imports": ["/build/_shared/chunk-A33U2VHE.js", "/build/_shared/chunk-6AWONSVN.js"], "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/$gameId": { "id": "routes/$gameId", "parentId": "root", "path": ":gameId", "index": void 0, "caseSensitive": void 0, "module": "/build/routes/$gameId-DB4LOAN5.js", "imports": void 0, "hasAction": false, "hasLoader": true, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/index": { "id": "routes/index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "module": "/build/routes/index-W5QZI7XY.js", "imports": void 0, "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false } }, "url": "/build/manifest-CA49F080.js" };
+var assets_manifest_default = { "version": "b00936f1", "entry": { "module": "/build/entry.client-RUNECLBG.js", "imports": ["/build/_shared/chunk-G65EAHCX.js"] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "module": "/build/root-SGEVEROF.js", "imports": ["/build/_shared/chunk-YVFBHWGJ.js", "/build/_shared/chunk-6AWONSVN.js"], "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/$gameId": { "id": "routes/$gameId", "parentId": "root", "path": ":gameId", "index": void 0, "caseSensitive": void 0, "module": "/build/routes/$gameId-DB4LOAN5.js", "imports": void 0, "hasAction": false, "hasLoader": true, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/index": { "id": "routes/index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "module": "/build/routes/index-ELBA7Q44.js", "imports": void 0, "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false } }, "url": "/build/manifest-B00936F1.js" };
 
 // server-entry-module:@remix-run/dev/server-build
 var entry = { module: entry_server_exports };
@@ -729,6 +726,9 @@ var import_socket_controllers = require("socket-controllers");
 // app/controllers/connection.ts
 init_react();
 
+// app/controllers/client.ts
+init_react();
+
 // app/utils/helper.ts
 init_react();
 var import_moment = __toESM(require("moment"));
@@ -755,7 +755,6 @@ var printLog = (type = "default", label = "", ...message) => {
 };
 
 // app/controllers/client.ts
-init_react();
 var ClientController = class {
   constructor(socket) {
     this.socket = socket;

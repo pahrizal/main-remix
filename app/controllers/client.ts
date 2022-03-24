@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { printLog } from "~/utils/helper";
+import { printLog } from "../utils/helper";
 import { clients } from "./connection";
 
 export type ClientEvent = "join" | "joining";

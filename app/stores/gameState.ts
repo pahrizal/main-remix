@@ -1,8 +1,6 @@
 import { Reducer } from "redux";
-import { Socket } from "socket.io-client";
-import { ClientEvent } from "~/controllers/client";
-import { ThunkAction } from "./index";
 import { v4 as uuidV4 } from "uuid";
+import { ThunkAction } from "./index";
 import { SocketActions } from "./socketState";
 
 export interface GameState {
