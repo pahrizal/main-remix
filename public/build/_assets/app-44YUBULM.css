@@ -1,0 +1,14 @@
+@import url("https://fonts.googleapis.com/css?family=Exo:700,800");
+@import url("https://fonts.googleapis.com/css?family=La+Belle+Aurore");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @font-face {
+    font-family: "Virgil";
+    font-weight: 400;
+    src: url(/fonts/Virgil.woff2) format(woff2);
+  },
+}

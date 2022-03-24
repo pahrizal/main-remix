@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["browser-route-module:/Users/papuq/Work/main-remix/app/routes/index.tsx?browser", "../../../app/routes/index.tsx"],
+  "sourcesContent": ["export { default } from \"/Users/papuq/Work/main-remix/app/routes/index.tsx\";", "export default function Index() {\n  return (\n    <div className=\"flex flex-col items-center justify-center\">\n      <div className=\"flex flex-row\">\n        <h1 className=\"text-4xl text-lime-400 font-virgil\">Main</h1>\n        <h1 className=\"text-4xl text-lime-400 font-exo\">Main</h1>\n        <h1 className=\"text-4xl text-lime-400 font-belle\">Main</h1>\n      </div>\n    </div>\n  );\n}\n"],
+  "mappings": ";;;;;;AAAA;;;ACAA;AAAe,iBAAiB;AAC9B,SACE,oCAAC,OAAD;AAAA,IAAK,WAAU;AAAA,KACb,oCAAC,OAAD;AAAA,IAAK,WAAU;AAAA,KACb,oCAAC,MAAD;AAAA,IAAI,WAAU;AAAA,KAAqC,SACnD,oCAAC,MAAD;AAAA,IAAI,WAAU;AAAA,KAAkC,SAChD,oCAAC,MAAD;AAAA,IAAI,WAAU;AAAA,KAAoC;AAAA;",
+  "names": []
+}
