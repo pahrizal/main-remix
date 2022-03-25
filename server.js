@@ -1,11 +1,10 @@
-import express from "express";
-import compression from "compression";
-import morgan from "morgan";
-import { createRequestHandler } from "@remix-run/express";
 import * as serverBuild from "@remix-run/dev/server-build";
+import { createRequestHandler } from "@remix-run/express";
+import compression from "compression";
+import express from "express";
 import http from "http";
+import morgan from "morgan";
 import { Server } from "socket.io";
-import { useSocketServer as attachSocketController } from "socket-controllers";
 import ConnectionController from "./app/controllers/connection";
 const app = express();
 
@@ -17,11 +16,13 @@ const io = new Server(server, {
   cors: {
     origin: "*",
   },
+  transports: ["websocket"],
+  allowUpgrades: false,
 });
 
 // attach socket connection controller
 const socketConn = new ConnectionController(io);
-socketConn.listen();
+socketConn.start();
 
 app.use(compression());
 

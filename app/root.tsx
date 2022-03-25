@@ -48,7 +48,15 @@ function App() {
   const dispatch = useDispatch();
 
   React.useEffect(() => {
-    dispatch(socketActions.init(socketClient(), (data) => {}));
+    dispatch(
+      socketActions.init(
+        socketClient({
+          transports: ["websocket"],
+          upgrade: false,
+        }),
+        (data) => {}
+      )
+    );
   }, []);
   return (
     <html
