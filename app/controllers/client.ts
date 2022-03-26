@@ -115,8 +115,11 @@ export default class ClientController {
       return;
     }
 
-    // check if the game has not started yet
-    if (game.isStarted()) {
+    // emit game not found when the game is already started and the player is not in the game
+    if (
+      game.isStarted() &&
+      game.getPlayerById(data.playerData.id) === undefined
+    ) {
       printLog("warning", "CLIENT", "Game already started ", data.gameData.id);
       this.socket.emit("notFound", data.gameData.id);
       return;
@@ -146,7 +149,7 @@ export default class ClientController {
       gameData: game.getData(),
       playerData: newPlayer.getData(),
     };
-    // send the data to the client
+    // send the data to the client if the game is not started
     this.socket.emit("joined", joinData);
 
     // send player list to the game room

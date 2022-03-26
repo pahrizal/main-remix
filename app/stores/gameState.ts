@@ -24,14 +24,14 @@ interface GameActionTypes {
   readonly SET_GAME_DATA: "SET_GAME_DATA";
   readonly SET_GAME_NOT_FOUND: "SET_GAME_NOT_FOUND";
   readonly SET_PLAYERS: "SET_PLAYERS";
-  readonly SET_GAME_STATE: "SET_GAME_STATE";
+  readonly SET_GAME_STATUS: "SET_GAME_STATUS";
 }
 
 const GameActionsTypes: GameActionTypes = {
   SET_GAME_DATA: "SET_GAME_DATA",
   SET_GAME_NOT_FOUND: "SET_GAME_NOT_FOUND",
   SET_PLAYERS: "SET_PLAYERS",
-  SET_GAME_STATE: "SET_GAME_STATE",
+  SET_GAME_STATUS: "SET_GAME_STATUS",
 };
 
 interface SetGameData {
@@ -40,7 +40,7 @@ interface SetGameData {
 }
 
 interface SetGameStatus {
-  type: "SET_GAME_STATE";
+  type: "SET_GAME_STATUS";
   payload: typeof initialGameState.status;
 }
 interface SetPlayers {
@@ -239,6 +239,16 @@ export const gameActions = {
     };
   },
 
+  // redux action to set game status
+  setGameStatus: (status: GameStatus): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_GAME_STATUS,
+        payload: status,
+      });
+    };
+  },
+
   // redux action to start the game
   start: (): ThunkAction<GameActions | SocketActions> => {
     return async (dispatch, getState) => {
@@ -246,14 +256,7 @@ export const gameActions = {
       const gameData = getState().game.data;
       if (!socket || !gameData) return;
       console.log("sending start game request");
-      socketActions.startGame((gameData) => {
-        console.log("game started", gameData);
-        // set game state to started
-        dispatch({
-          type: GameActionsTypes.SET_GAME_STATE,
-          payload: GameStatus.STARTED,
-        });
-      })(dispatch, getState);
+      socket.emit("start", gameData);
     };
   },
 };
@@ -282,7 +285,7 @@ export const GameReducer: Reducer<GameState, GameActions> = (
         ...state,
         players: action.payload,
       };
-    case GameActionsTypes.SET_GAME_STATE:
+    case GameActionsTypes.SET_GAME_STATUS:
       return {
         ...state,
         status: action.payload,

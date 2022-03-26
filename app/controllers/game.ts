@@ -15,6 +15,7 @@ export enum GameStatus {
   FINISHED = "FINISHED",
   BUSY = "BUSY",
   READY = "READY",
+  UNDEFINED = "UNDEFINED",
 }
 
 export interface GameData {
