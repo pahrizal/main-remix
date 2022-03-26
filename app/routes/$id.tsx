@@ -128,9 +128,11 @@ const GameScreen = () => {
         >
           Abort!
         </Button>
-        <Button onClick={() => dispatch(gameActions.start())}>
-          Launch the game!
-        </Button>
+        {dataState?.gameData.owner === dataState?.playerData.id && (
+          <Button onClick={() => dispatch(gameActions.start())}>
+            Launch the game!
+          </Button>
+        )}
       </div>
     </div>
   );
