@@ -60,3 +60,35 @@ export const printLog = (
     `${color}${message.join("")}${TerminalColor.Reset}`
   );
 };
+
+/*
+(c) by Thomas Konings
+Random Name Generator for Javascript
+*/
+
+function capFirst(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function getRandomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+export function generateName(wordLen: number = 2) {
+  const output: string[] = [];
+  const consonants = "bcdfghjklmnpqrstvwxyz";
+  const vowels = "aeiou";
+  for (let w = 0; w < wordLen; w++) {
+    const wordCharLen = getRandomInt(3, 10);
+    const name = [];
+    for (let i = 0; i < wordCharLen; i++) {
+      if (i % 2 === 0) {
+        name.push(consonants.charAt(getRandomInt(0, consonants.length)));
+      } else {
+        name.push(vowels.charAt(getRandomInt(0, vowels.length)));
+      }
+    }
+    output.push(capFirst(name.join("")));
+  }
+  return output.join("");
+}

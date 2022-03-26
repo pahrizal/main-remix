@@ -6,7 +6,7 @@
   "sideEffects": false,
   "main": "build/index.js",
   "scripts": {
-    "build": "npm-run-all build:clean build:css build:remix build:cpserver build:cpclient build:bundle",
+    "build": "npm-run-all build:clean build:css build:remix",
     "build:all": "npm-run-all build:clean build:css build:remix build:cpserver build:cpclient build:bundle build:docker",
     "build:clean": "rimraf ./public/build ./dist/*",
     "build:css": "npm run generate:css -- --minify",
