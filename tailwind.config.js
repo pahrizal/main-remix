@@ -37,6 +37,7 @@ module.exports = {
       },
       animation: {
         rubber: "rubber 0.5s both",
+        "spin-slow": "spin 10s linear infinite",
       },
     },
   },

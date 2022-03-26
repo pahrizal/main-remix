@@ -2,6 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "remix";
 import { v4 as uuidv4 } from "uuid";
+import Button from "~/components/button";
 import playingCardBackground from "../assets/images/playing-cards.png";
 import RubberText from "../components/rubberText";
 import { AppState } from "../stores";
@@ -47,11 +48,12 @@ export default function Index() {
       playerNameRef.current?.focus();
       return;
     }
-    dispatch(gameActions.create());
+    dispatch(gameActions.create(playerName));
   };
 
   React.useEffect(() => {
     if (!data) return;
+    console.log(data);
     nav(data.gameData.id);
   }, [data]);
 
@@ -92,6 +94,7 @@ export default function Index() {
           <div className="flex flex-row border border-lime-500 items-center sm:w-full">
             <input
               ref={playerNameRef}
+              maxLength={20}
               value={playerName}
               className="h-100 flex flex-grow bg-transparent py-4  outline-none px-4 text-lime-500  xl:text-xl lg:text-lg md:text-md text-sm font-bold font-exo"
               placeholder="Type your name here"
@@ -107,20 +110,10 @@ export default function Index() {
               placeholder="Enter the game ID here"
               onChange={handleRoomInput}
             />
-            <button
-              className="bg-lime-500 hover:bg-lime-400 outlined-none px-4 py-4 font-exo text-slate-900  xl:text-xl lg:text-lg md:text-md text-sm"
-              onClick={handleJoin}
-            >
-              <p>Play</p>
-            </button>
+            <Button onClick={handleJoin}>Play</Button>
           </div>
           <div className="sm:mr-0 xs:mr-0 xl:mr-4 lg:mr-4 md:mr-4 sm:w-full xs:w-full text-center mt-4">
-            <button
-              className="bg-lime-500 hover:bg-lime-400 px-4 rounded-md py-4 font-exo text-slate-900 xl:text-xl lg:text-lg md:text-md text-sm"
-              onClick={handleCreateGame}
-            >
-              <p>Create your own game</p>
-            </button>
+            <Button onClick={handleCreateGame}>Create your own game</Button>
           </div>
         </div>
       </div>

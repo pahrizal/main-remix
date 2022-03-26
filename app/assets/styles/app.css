@@ -21,3 +21,9 @@
 .font-belle {
   font-family: "La Belle Aurore";
 }
+
+.ow {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}

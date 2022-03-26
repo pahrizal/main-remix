@@ -2,6 +2,8 @@ import clsx from "clsx";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { json, LoaderFunction, useLoaderData } from "remix";
+import Button from "~/components/button";
+import PlayerAvatar from "~/components/playerAvatar";
 import { JoinData } from "~/controllers/client";
 import { GameData } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
@@ -64,39 +66,71 @@ const GameScreen = () => {
 
   return (
     <div className="w-screen h-screen flex flex-col justify-center items-center">
-      <div className="flex flex-row items-center">
-        <h1 className="text-xl font-exo mr-2">Game ID:</h1>
-        <h1 className="text-xl">{dataState?.gameData.id}</h1>
+      <div className="hidden fixed top-0 right-0 m-4 text-sm">
+        <div className="flex flex-row items-center">
+          <h1 className="font-exo mr-2">Player Name:</h1>
+          <h1 className="">{dataState?.playerData.name}</h1>
+        </div>
+        <div className="flex flex-row items-center">
+          <h1 className="font-exo mr-2">Game ID:</h1>
+          <h1 className="">{dataState?.gameData.id}</h1>
+        </div>
+        <div className="flex flex-row items-center">
+          <h1 className="font-exo mr-2">Player ID:</h1>
+          <h1 className="">{dataState?.playerData.id}</h1>
+        </div>
+        <div className="flex flex-row items-center">
+          <h1 className="font-exo mr-2">Player Count:</h1>
+          <h1 className="">{players.length}</h1>
+        </div>
+        <div className="flex flex-row items-center">
+          <h1 className="font-exo mr-2">is owner</h1>
+          <h1 className="">
+            {dataState && dataState.gameData.owner === dataState.playerData.id
+              ? "true"
+              : "false"}
+          </h1>
+        </div>
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={() => dispatch(gameActions.leave())}
+        >
+          Leave
+        </button>
+        <div
+          ref={notifRef}
+          className={clsx(
+            "fixed bottom-0 hidden right-0 mr-4 mb-4 bg-yellow-200 rounded-xl"
+          )}
+        >
+          <p>Player {leavingPlayer && leavingPlayer.id} has leaving the game</p>
+        </div>
       </div>
-      <div className="flex flex-row items-center">
-        <h1 className="text-xl font-exo mr-2">Player ID:</h1>
-        <h1 className="text-xl">{dataState?.playerData.id}</h1>
+      <p className="text-center text-2xl font-exo mb-8">
+        Waiting another player...
+      </p>
+      <div className="flex flex-row space-x-4 items-center">
+        {players.map((player) => (
+          <PlayerAvatar
+            me={player.id === dataState?.gameData.owner}
+            key={player.id}
+            name={player.name}
+          />
+        ))}
+        {[1, 2, 3, 4].slice(0, -players.length).map((i) => (
+          <PlayerAvatar key={i} />
+        ))}
       </div>
-      <div className="flex flex-row items-center">
-        <h1 className="text-xl font-exo mr-2">Player Count:</h1>
-        <h1 className="text-xl">{players.length}</h1>
-      </div>
-      <div className="flex flex-row items-center">
-        <h1 className="text-xl font-exo mr-2">is owner</h1>
-        <h1 className="text-xl">
-          {dataState && dataState.gameData.owner === dataState.playerData.id
-            ? "true"
-            : "false"}
-        </h1>
-      </div>
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => dispatch(gameActions.leave())}
-      >
-        Leave
-      </button>
-      <div
-        ref={notifRef}
-        className={clsx(
-          "fixed bottom-0 hidden right-0 mr-4 mb-4 bg-yellow-200 rounded-xl"
-        )}
-      >
-        <p>Player {leavingPlayer && leavingPlayer.id} has leaving the game</p>
+      <div className="flex flex-row space-x-4 items-center mt-8">
+        <Button
+          className="bg-slate-500 font-exo hover:bg-slate-700 hover:text-slate-100 text-slate-900 font-bold py-4 px-8"
+          onClick={() => dispatch(gameActions.leave())}
+        >
+          Abort!
+        </Button>
+        <Button onClick={() => dispatch(gameActions.start())}>
+          Launch the game!
+        </Button>
       </div>
     </div>
   );
