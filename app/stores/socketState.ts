@@ -2,7 +2,7 @@ import { Reducer } from "redux";
 import { Socket } from "socket.io-client";
 import { GameData } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
-import { ClientEvent, JoinData } from "../controllers/client";
+import { JoinData } from "../controllers/client";
 import { gameActions, GameActions } from "./gameState";
 import { ThunkAction } from "./index";
 

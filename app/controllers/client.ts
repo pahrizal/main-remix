@@ -10,6 +10,11 @@ export interface JoinData {
   gameData: GameData;
   playerData: PlayerData;
 }
+
+export interface NewGameData {
+  playerName: string;
+  gameData: GameData;
+}
 /**
  * This class is used to manage the socket connection created by the client
  * @class ClientController
@@ -31,6 +36,7 @@ export default class ClientController {
     socket.on("create", this.create.bind(this));
     socket.on("join", this.join.bind(this));
     socket.on("leave", this.leave.bind(this));
+    socket.on("start", this.start.bind(this));
   }
   /**
    * This method is used to disconnect the socket connection
@@ -46,12 +52,12 @@ export default class ClientController {
     clients.splice(clientIndex, 1);
   }
 
-  //   getGame() {
-  //     const data = this.socket.data as JoinData;
-  //     return games.find((game) => game.getId() === data.gameData.id);
-  //   }
-
-  create(data: { playerName: string; gameData: GameData }) {
+  /**
+   *
+   * @param {NewGameData} data game data sent by the client to create a new game
+   * @returns {void}
+   */
+  create(data: NewGameData): void {
     // prepare game owner data
     const ownerData: PlayerData = {
       id: uuidv4(),
@@ -88,13 +94,17 @@ export default class ClientController {
     printLog("info", "CLIENT", "New game created: ", newGame.getId());
   }
 
-  join(data: JoinData) {
+  /**
+   *
+   * @param {JoinData} data game join data sent by player (gameData and playerData)
+   * @returns {void}
+   */
+  join(data: JoinData): void {
     let newPlayer: PlayerController = new PlayerController({
       id: data.playerData.id || uuidv4(),
       name: data.playerData.name || generateName(1),
       socketId: this.socket.id,
     });
-    console.log(data);
     // check if the game is already created
     let game = games.find((game) => game.getId() === data.gameData.id);
 
@@ -102,42 +112,43 @@ export default class ClientController {
       printLog("warning", "CLIENT", "Game not found ", data.gameData.id);
       // tell the client that the game is not found
       this.socket.emit("notFound", data.gameData.id);
-    } else {
-      // check if current player is already in the game
-      const existingPlayer = game.getPlayerById(data.playerData.id);
-      if (!existingPlayer) {
-        // create the player if the game is not full
-        if (game.getTotalPlayer() < 4) {
-          // add the player to the game
-          game.addPlayer(newPlayer);
-        } else {
-          // send error message to the client
-          this.socket.emit("error", {
-            message: "Game is full",
-          });
-        }
-      }
-
-      // join the game room
-      printLog("info", "CLIENT", "Joining game room: ", game.getId());
-      this.socket.join(game.getId());
-
-      // prepare the data to send to the client
-      const joinData: JoinData = {
-        gameData: game.getData(),
-        playerData: newPlayer.getData(),
-      };
-      // send the data to the client
-      this.socket.emit("joined", joinData);
-
-      // send player list to the game room
-      // get all player in the game
-      const players = game.getPlayers();
-      // map the player data to send to the client
-      const playerData = players.map((player) => player.getData());
-      //send the data to the client
-      this.server.in(game.getId()).emit("players", playerData);
+      return;
     }
+    console.log(data);
+    // check if current player is already in the game
+    const existingPlayer = game.getPlayerById(data.playerData.id);
+    if (!existingPlayer) {
+      // create the player if the game is not full
+      if (game.getTotalPlayer() < 4) {
+        // add the player to the game
+        game.addPlayer(newPlayer);
+      } else {
+        // send error message to the client
+        this.socket.emit("error", {
+          message: "Game is full",
+        });
+      }
+    }
+
+    // join the game room
+    printLog("info", "CLIENT", "Joining game room: ", game.getId());
+    this.socket.join(game.getId());
+
+    // prepare the data to send to the client
+    const joinData: JoinData = {
+      gameData: game.getData(),
+      playerData: newPlayer.getData(),
+    };
+    // send the data to the client
+    this.socket.emit("joined", joinData);
+
+    // send player list to the game room
+    // get all player in the game
+    const players = game.getPlayers();
+    // map the player data to send to the client
+    const playerData = players.map((player) => player.getData());
+    //send the data to the client
+    this.server.in(game.getId()).emit("players", playerData);
   }
 
   /**
@@ -160,6 +171,26 @@ export default class ClientController {
         this.server.in(game.getId()).emit("left", player.getData());
         game.removePlayer(player);
       }
+    }
+  }
+
+  /**
+   * This method is used to start the game
+   * @method start
+   * @params {JoinData} data The game id
+   * @returns {void}
+   */
+  start(data: JoinData): void {
+    printLog("info", "CLIENT", "Starting game: ", data);
+    // get game data from game list
+    const game = games.find((game) => game.getId() === data.gameData.id);
+
+    // if game is defined, proceed starting the game
+    if (game) {
+      // start the game
+      game.start();
+      // broadcast to other players that the game started
+      this.server.in(game.getId()).emit("started", game.getData());
     }
   }
 }

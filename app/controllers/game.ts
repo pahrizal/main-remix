@@ -85,4 +85,8 @@ export default class GameController {
     );
     this.data.playerCount = this.players.length;
   }
+
+  start() {
+    printLog("info", "GAME", "Game started: ", this.data.id);
+  }
 }

@@ -6,7 +6,14 @@ import { generateName } from "~/utils/helper";
 import { ThunkAction } from "./index";
 import { socketActions, SocketActions } from "./socketState";
 
+export enum GameStatus {
+  WAITING = "WAITING",
+  STARTED = "STARTED",
+  FINISHED = "FINISHED",
+  BUSY = "BUSY",
+}
 export interface GameState {
+  status: GameStatus;
   data: JoinData | null;
   notFound: boolean;
   players: PlayerData[];
@@ -16,18 +23,21 @@ export const initialGameState: GameState = {
   data: null,
   notFound: false,
   players: [],
+  status: GameStatus.WAITING,
 };
 
 interface GameActionTypes {
   readonly SET_GAME_DATA: "SET_GAME_DATA";
   readonly SET_GAME_NOT_FOUND: "SET_GAME_NOT_FOUND";
   readonly SET_PLAYERS: "SET_PLAYERS";
+  readonly SET_GAME_STATE: "SET_GAME_STATE";
 }
 
 const GameActionsTypes: GameActionTypes = {
   SET_GAME_DATA: "SET_GAME_DATA",
   SET_GAME_NOT_FOUND: "SET_GAME_NOT_FOUND",
   SET_PLAYERS: "SET_PLAYERS",
+  SET_GAME_STATE: "SET_GAME_STATE",
 };
 
 interface SetGameData {
@@ -35,6 +45,10 @@ interface SetGameData {
   payload: typeof initialGameState.data;
 }
 
+interface SetGameStatus {
+  type: "SET_GAME_STATE";
+  payload: typeof initialGameState.status;
+}
 interface SetPlayers {
   type: "SET_PLAYERS";
   payload: typeof initialGameState.players;
@@ -44,7 +58,11 @@ interface SetGameNotFound {
   payload: typeof initialGameState.notFound;
 }
 
-export type GameActions = SetGameData | SetGameNotFound | SetPlayers;
+export type GameActions =
+  | SetGameData
+  | SetGameNotFound
+  | SetPlayers
+  | SetGameStatus;
 
 export const gameActions = {
   // game action to set players in the game
@@ -170,22 +188,25 @@ export const gameActions = {
           type: GameActionsTypes.SET_GAME_DATA,
           payload: joinData,
         });
-        return;
+        // return;
       }
 
-      // if the gameId is different, then prepare new join data
-      joinData = {
-        gameData: {
-          id: gameId,
-          level: 1,
-          owner: "",
-        },
-        playerData: {
-          id: "",
-          name: playerName,
-          socketId: socket.id,
-        },
-      };
+      // if joinData still null, then use initial data
+      if (!joinData) {
+        joinData = {
+          gameData: {
+            id: gameId,
+            level: 1,
+            owner: "",
+          },
+          playerData: {
+            id: "",
+            name: playerName,
+            socketId: socket.id,
+          },
+        };
+      }
+      console.log("sending join data", joinData);
       // send the join request to the server
       socket.emit("join", joinData);
     };
@@ -230,8 +251,14 @@ export const gameActions = {
       const socket = getState().socket.client;
       const gameData = getState().game.data;
       if (!socket || !gameData) return;
+      console.log("sending start game request");
       socketActions.startGame((gameData) => {
         console.log("game started", gameData);
+        // set game state to started
+        dispatch({
+          type: GameActionsTypes.SET_GAME_STATE,
+          payload: GameStatus.STARTED,
+        });
       })(dispatch, getState);
     };
   },
@@ -261,7 +288,11 @@ export const GameReducer: Reducer<GameState, GameActions> = (
         ...state,
         players: action.payload,
       };
-
+    case GameActionsTypes.SET_GAME_STATE:
+      return {
+        ...state,
+        status: action.payload,
+      };
     default:
       return state;
   }

@@ -61,16 +61,11 @@ export const printLog = (
   );
 };
 
-/*
-(c) by Thomas Konings
-Random Name Generator for Javascript
-*/
-
-function capFirst(text: string) {
+export function capFirst(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function getRandomInt(min: number, max: number) {
+export function getRandomInt(min: number = 0, max: number = 999) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
@@ -92,3 +87,6 @@ export function generateName(wordLen: number = 2) {
   }
   return output.join("");
 }
+
+export const randomColor = () =>
+  `#${Math.floor(Math.random() * 16777215).toString(16)}`;
