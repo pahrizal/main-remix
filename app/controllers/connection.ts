@@ -24,7 +24,7 @@ class ConnectionController {
   start() {
     this.io.on("connection", (socket) => {
       printLog("default", "SOCKET", "connected: ", socket.id);
-      const client = new ClientController(socket);
+      const client = new ClientController(socket, this.io);
       clients.push(client);
     });
   }

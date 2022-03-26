@@ -382,7 +382,7 @@ var animation_default = "/build/_assets/animation-2KLKVNUX.css";
 var app_default = "/build/_assets/app-Q2D3FZV5.css";
 
 // app/assets/styles/tailwind.css
-var tailwind_default = "/build/_assets/tailwind-3T5MKMDM.css";
+var tailwind_default = "/build/_assets/tailwind-M5X4BJOO.css";
 
 // app/stores/index.ts
 init_react();
@@ -414,103 +414,30 @@ var printLog = (type = "default", label = "", ...message) => {
   }
   console.log(`[${"\x1B[35m" /* FgMagenta */}${currentTimestamp() + "\x1B[0m" /* Reset */}][${"\x1B[36m" /* FgCyan */}${label}${"\x1B[0m" /* Reset */}]`, `${color}${message.join("")}${"\x1B[0m" /* Reset */}`);
 };
-
-// app/stores/gameState.ts
-var initialGameState = {
-  data: null
-};
-var GameActionsTypes = {
-  SET_GAME_DATA: "SET_GAME_DATA"
-};
-var gameActions = {
-  create: () => {
-    return async (dispatch, getState) => {
-      const socket = getState().socket.client;
-      console.log("creating new game");
-      if (!socket)
-        return;
-      const newData = {
-        gameData: {
-          id: socket.id,
-          level: 1,
-          owner: ""
-        },
-        playerData: {
-          id: "",
-          name: "",
-          socketId: socket.id
-        }
-      };
-      dispatch({
-        type: GameActionsTypes.SET_GAME_DATA,
-        payload: newData
-      });
-    };
-  },
-  join: (gameId) => {
-    return async (dispatch, getState) => {
-      const socket = getState().socket.client;
-      let gameData = getState().game.data;
-      const persistantGameData = localStorage.getItem(gameId);
-      if (!socket) {
-        printLog("error", "WEB", "Socket is not connected");
-        return;
-      }
-      if (!gameData) {
-        if (persistantGameData) {
-          gameData = JSON.parse(persistantGameData);
-          dispatch({
-            type: GameActionsTypes.SET_GAME_DATA,
-            payload: gameData
-          });
-        }
-      }
-      if ((gameData == null ? void 0 : gameData.gameData.id) === gameId) {
-        printLog("warning", "GAME", "Already in this game");
-        gameData.playerData.socketId = socket.id;
-        dispatch({
-          type: GameActionsTypes.SET_GAME_DATA,
-          payload: gameData
-        });
-        return;
+function capFirst(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+function generateName(wordLen = 2) {
+  const output = [];
+  const consonants = "bcdfghjklmnpqrstvwxyz";
+  const vowels = "aeiou";
+  for (let w = 0; w < wordLen; w++) {
+    const wordCharLen = getRandomInt(3, 10);
+    const name = [];
+    for (let i = 0; i < wordCharLen; i++) {
+      if (i % 2 === 0) {
+        name.push(consonants.charAt(getRandomInt(0, consonants.length)));
       } else {
-        gameData = {
-          gameData: {
-            id: gameId,
-            level: 1,
-            owner: ""
-          },
-          playerData: {
-            id: "",
-            name: "",
-            socketId: socket.id
-          }
-        };
+        name.push(vowels.charAt(getRandomInt(0, vowels.length)));
       }
-      socket.emit("join", gameData);
-      socket.on("joined", (payload) => {
-        dispatch({
-          type: GameActionsTypes.SET_GAME_DATA,
-          payload
-        });
-        localStorage.setItem(gameId, JSON.stringify(payload));
-      });
-    };
+    }
+    output.push(capFirst(name.join("")));
   }
-};
-var GameReducer = (state, action) => {
-  if (state === void 0) {
-    return initialGameState;
-  }
-  switch (action.type) {
-    case GameActionsTypes.SET_GAME_DATA:
-      return __spreadProps(__spreadValues({}, state), {
-        data: action.payload
-      });
-    default:
-      return state;
-  }
-};
+  return output.join("");
+}
 
 // app/stores/socketState.ts
 init_react();
@@ -538,6 +465,46 @@ var socketActions = {
         payload: socket
       });
     };
+  },
+  startLinsteningGameEvents: () => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      if (!socket)
+        return;
+      socket.on("created", (payload) => {
+        console.log("game created", payload);
+        gameActions.setGameData(payload)(dispatch, getState);
+        gameActions.addPlayer(payload.playerData)(dispatch, getState);
+      });
+      socket.on("players", (payload) => {
+        console.log("new player list", payload);
+        gameActions.setPlayers(payload)(dispatch, getState);
+      });
+      socket.on("notFound", (payload) => {
+        gameActions.setGameNotFound(true)(dispatch, getState);
+      });
+      socket.on("joined", (payload) => {
+        console.log("joined", payload);
+        gameActions.setGameData(payload)(dispatch, getState);
+        gameActions.addPlayer(payload.playerData)(dispatch, getState);
+      });
+      socket.on("left", (payload) => {
+        console.log(payload.name, "has left the game");
+        gameActions.removePlayer(payload.id)(dispatch, getState);
+      });
+    };
+  },
+  stopListeningGameEvents: () => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      if (!socket)
+        return;
+      socket.off("created");
+      socket.off("newPlayer");
+      socket.off("notFound");
+      socket.off("joined");
+      socket.off("left");
+    };
   }
 };
 var SocketReducer = (state, action) => {
@@ -552,6 +519,170 @@ var SocketReducer = (state, action) => {
     case SocketActionsTypes.SET_CONNECTED:
       return __spreadProps(__spreadValues({}, state), {
         connected: action.payload
+      });
+    default:
+      return state;
+  }
+};
+
+// app/stores/gameState.ts
+var initialGameState = {
+  data: null,
+  notFound: false,
+  players: []
+};
+var GameActionsTypes = {
+  SET_GAME_DATA: "SET_GAME_DATA",
+  SET_GAME_NOT_FOUND: "SET_GAME_NOT_FOUND",
+  SET_PLAYERS: "SET_PLAYERS"
+};
+var gameActions = {
+  setPlayers: (players) => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_PLAYERS,
+        payload: players
+      });
+    };
+  },
+  addPlayer: (player) => {
+    return async (dispatch, getState) => {
+      const players = getState().game.players;
+      const playerExist = players.find((p) => p.id === player.id);
+      if (playerExist)
+        return;
+      dispatch({
+        type: GameActionsTypes.SET_PLAYERS,
+        payload: [...players, player]
+      });
+      console.log("player added", player);
+    };
+  },
+  removePlayer: (playerId) => {
+    return async (dispatch, getState) => {
+      const players = getState().game.players;
+      const playerExist = players.find((p) => p.id === playerId);
+      if (!playerExist)
+        return;
+      dispatch({
+        type: GameActionsTypes.SET_PLAYERS,
+        payload: players.filter((p) => p.id !== playerId)
+      });
+    };
+  },
+  setGameNotFound: (payload) => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_GAME_NOT_FOUND,
+        payload
+      });
+    };
+  },
+  setGameData: (data) => {
+    return async (dispatch, getState) => {
+      localStorage.setItem(data.gameData.id, JSON.stringify(data));
+      dispatch({
+        type: GameActionsTypes.SET_GAME_DATA,
+        payload: data
+      });
+    };
+  },
+  create: (playerName) => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      if (!socket)
+        return;
+      const gameData = {
+        id: generateName(),
+        level: 1,
+        owner: ""
+      };
+      socket.emit("create", { playerName, gameData });
+      socketActions.startLinsteningGameEvents()(dispatch, getState);
+    };
+  },
+  join: (gameId, playerName) => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      if (!socket)
+        return;
+      socketActions.startLinsteningGameEvents()(dispatch, getState);
+      let joinData = getState().game.data;
+      const persistantGameData = localStorage.getItem(gameId);
+      if (!joinData) {
+        if (persistantGameData) {
+          joinData = JSON.parse(persistantGameData);
+          dispatch({
+            type: GameActionsTypes.SET_GAME_DATA,
+            payload: joinData
+          });
+        }
+      }
+      if ((joinData == null ? void 0 : joinData.gameData.id) === gameId) {
+        joinData.playerData.socketId = socket.id;
+        dispatch({
+          type: GameActionsTypes.SET_GAME_DATA,
+          payload: joinData
+        });
+        return;
+      }
+      joinData = {
+        gameData: {
+          id: gameId,
+          level: 1,
+          owner: ""
+        },
+        playerData: {
+          id: "",
+          name: playerName,
+          socketId: socket.id
+        }
+      };
+      socket.emit("join", joinData);
+    };
+  },
+  leave: () => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      const gameData = getState().game.data;
+      if (!socket || !gameData)
+        return;
+      socket.emit("leave", gameData);
+      socketActions.stopListeningGameEvents()(dispatch, getState);
+      localStorage.removeItem(gameData.gameData.id);
+      dispatch({
+        type: GameActionsTypes.SET_GAME_DATA,
+        payload: null
+      });
+      document.location = "/";
+    };
+  },
+  toggleNotFound: () => {
+    return async (dispatch, getState) => {
+      const notFound = getState().game.notFound;
+      dispatch({
+        type: GameActionsTypes.SET_GAME_NOT_FOUND,
+        payload: !notFound
+      });
+    };
+  }
+};
+var GameReducer = (state, action) => {
+  if (state === void 0) {
+    return initialGameState;
+  }
+  switch (action.type) {
+    case GameActionsTypes.SET_GAME_DATA:
+      return __spreadProps(__spreadValues({}, state), {
+        data: action.payload
+      });
+    case GameActionsTypes.SET_GAME_NOT_FOUND:
+      return __spreadProps(__spreadValues({}, state), {
+        notFound: action.payload
+      });
+    case GameActionsTypes.SET_PLAYERS:
+      return __spreadProps(__spreadValues({}, state), {
+        players: action.payload
       });
     default:
       return state;
@@ -636,7 +767,11 @@ __export(routes_exports, {
 });
 init_react();
 var import_react3 = __toESM(require("react"));
+var import_react_redux2 = require("react-redux");
 var import_remix3 = __toESM(require_remix());
+
+// app/assets/images/playing-cards.png
+var playing_cards_default = "/build/_assets/playing-cards-PK6EDUO4.png";
 
 // app/components/rubberText.tsx
 init_react();
@@ -662,15 +797,15 @@ var RubberText = ({
 };
 var rubberText_default = RubberText;
 
-// app/assets/images/playing-cards.png
-var playing_cards_default = "/build/_assets/playing-cards-PK6EDUO4.png";
-
 // route:/Users/papuq/Work/main-remix/app/routes/index.tsx
-var import_react_redux2 = require("react-redux");
 function Index() {
   const [joinId, setJoinId] = import_react3.default.useState("");
+  const [playerName, setPlayerName] = import_react3.default.useState("");
   const data = (0, import_react_redux2.useSelector)((state) => state.game.data);
+  const notFound = (0, import_react_redux2.useSelector)((state) => state.game.notFound);
   const dispatch = (0, import_react_redux2.useDispatch)();
+  const joinIdRef = import_react3.default.useRef(null);
+  const playerNameRef = import_react3.default.useRef(null);
   const nav = (0, import_remix3.useNavigate)();
   const handleRoomInput = (event) => {
     const value = event.target.value;
@@ -678,17 +813,43 @@ function Index() {
       return;
     setJoinId(value);
   };
+  const handleNameInput = (event) => {
+    const value = event.target.value;
+    if (!value)
+      return;
+    setPlayerName(value);
+  };
   const handleJoin = () => {
-    dispatch(gameActions.join(joinId));
+    var _a, _b;
+    if (!playerName) {
+      (_a = playerNameRef.current) == null ? void 0 : _a.focus();
+      return;
+    }
+    if (!joinId) {
+      (_b = joinIdRef.current) == null ? void 0 : _b.focus();
+      return;
+    }
+    dispatch(gameActions.join(joinId, playerName));
   };
   const handleCreateGame = () => {
+    var _a;
+    if (!playerName) {
+      (_a = playerNameRef.current) == null ? void 0 : _a.focus();
+      return;
+    }
     dispatch(gameActions.create());
   };
   import_react3.default.useEffect(() => {
     if (!data)
       return;
     nav(data.gameData.id);
-  }, [data == null ? void 0 : data.gameData.id]);
+  }, [data]);
+  import_react3.default.useEffect(() => {
+    if (notFound) {
+      alert("Game not found");
+      dispatch(gameActions.toggleNotFound());
+    }
+  }, [notFound]);
   return /* @__PURE__ */ import_react3.default.createElement("div", {
     className: "flex flex-col w-screen h-screen justify-center items-center"
   }, /* @__PURE__ */ import_react3.default.createElement("img", {
@@ -717,22 +878,32 @@ function Index() {
     bounceIn: "right",
     className: "font-exo xl:text-8xl lg:md:text-6xl text-4xl hover:animate-rubber px-2 hover:text-slate-100 text-lime-400 cursor-pointer"
   })), /* @__PURE__ */ import_react3.default.createElement("div", {
-    className: "flex w-full xs:flex-col sm:flex-col md:flex-row lg::flex-row xl:flex-row 2xl:flex-row mt-8 items-center"
+    className: "flex w-full flex-col mt-8 items-center"
   }, /* @__PURE__ */ import_react3.default.createElement("div", {
-    className: "sm:mr-0 xs:mr-0 xl:mr-4 lg:mr-4 md:mr-4 border-lime-500 border-2 sm:w-full xs:w-full text-center xl:mb-0 lg:mb-0 md:mb-0 sm:mb-2 xs:mb-2"
-  }, /* @__PURE__ */ import_react3.default.createElement("button", {
-    className: "btn-anim-bg sm:w-full xs:w-full px-4 py-2 font-exo text-slate-100 xl:text-xl lg:text-lg md:text-md text-sm",
-    onClick: handleCreateGame
-  }, /* @__PURE__ */ import_react3.default.createElement("p", null, "New Game"))), /* @__PURE__ */ import_react3.default.createElement("div", {
-    className: "flex flex-row border-2 border-lime-500 sm:w-full"
+    className: "flex flex-row border border-lime-500 items-center sm:w-full"
   }, /* @__PURE__ */ import_react3.default.createElement("input", {
-    className: "h-100 flex flex-grow bg-transparent outline-none px-4 text-lime-500  xl:text-xl lg:text-lg md:text-md text-sm font-bold font-exo",
-    placeholder: "Enter game ID here",
+    ref: playerNameRef,
+    value: playerName,
+    className: "h-100 flex flex-grow bg-transparent py-4  outline-none px-4 text-lime-500  xl:text-xl lg:text-lg md:text-md text-sm font-bold font-exo",
+    placeholder: "Type your name here",
+    onChange: handleNameInput
+  }), /* @__PURE__ */ import_react3.default.createElement("p", {
+    className: "text-lime-500 font-virgil py-4 xl:text-xl lg:text-lg md:text-md text-sm"
+  }, "and"), /* @__PURE__ */ import_react3.default.createElement("input", {
+    ref: joinIdRef,
+    value: joinId,
+    className: "h-100 flex flex-grow bg-transparent py-4 outline-none px-4 text-lime-500  xl:text-xl lg:text-lg md:text-md text-sm font-bold font-exo",
+    placeholder: "Enter the game ID here",
     onChange: handleRoomInput
   }), /* @__PURE__ */ import_react3.default.createElement("button", {
-    className: "btn-anim-bg px-4 py-2 font-exo text-slate-100  xl:text-xl lg:text-lg md:text-md text-sm",
+    className: "bg-lime-500 hover:bg-lime-400 outlined-none px-4 py-4 font-exo text-slate-900  xl:text-xl lg:text-lg md:text-md text-sm",
     onClick: handleJoin
-  }, /* @__PURE__ */ import_react3.default.createElement("p", null, "Join"))))));
+  }, /* @__PURE__ */ import_react3.default.createElement("p", null, "Play"))), /* @__PURE__ */ import_react3.default.createElement("div", {
+    className: "sm:mr-0 xs:mr-0 xl:mr-4 lg:mr-4 md:mr-4 sm:w-full xs:w-full text-center mt-4"
+  }, /* @__PURE__ */ import_react3.default.createElement("button", {
+    className: "bg-lime-500 hover:bg-lime-400 px-4 rounded-md py-4 font-exo text-slate-900 xl:text-xl lg:text-lg md:text-md text-sm",
+    onClick: handleCreateGame
+  }, /* @__PURE__ */ import_react3.default.createElement("p", null, "Create your own game"))))));
 }
 
 // route:/Users/papuq/Work/main-remix/app/routes/$id.tsx
@@ -742,6 +913,7 @@ __export(id_exports, {
   loader: () => loader
 });
 init_react();
+var import_clsx2 = __toESM(require("clsx"));
 var import_react4 = __toESM(require("react"));
 var import_react_redux3 = require("react-redux");
 var import_remix4 = __toESM(require_remix());
@@ -749,15 +921,47 @@ var loader = async ({ params }) => {
   return (0, import_remix4.json)(__spreadValues({}, params));
 };
 var GameScreen = () => {
+  const notifRef = import_react4.default.useRef(null);
   const data = (0, import_remix4.useLoaderData)();
+  const [leavingPlayer, setLeavingPlayer] = import_react4.default.useState(null);
   const socket = (0, import_react_redux3.useSelector)((state) => state.socket.client);
+  const notFound = (0, import_react_redux3.useSelector)((state) => state.game.notFound);
   const dataState = (0, import_react_redux3.useSelector)((state) => state.game.data);
+  const players = (0, import_react_redux3.useSelector)((state) => state.game.players);
   const dispatch = (0, import_react_redux3.useDispatch)();
   import_react4.default.useEffect(() => {
-    if (data.id && socket) {
-      dispatch(gameActions.join(data.id));
+    if (notFound) {
+      alert("Game not found");
+      dispatch(gameActions.toggleNotFound());
+      document.location = "/";
+    }
+  }, [notFound]);
+  import_react4.default.useEffect(() => {
+    if (data && data.id && socket) {
+      let playerName = "Anonymous";
+      const localData = localStorage.getItem(data.id);
+      if (localData) {
+        const localDataObj = JSON.parse(localData);
+        playerName = localDataObj.playerData.name || "Anonymous";
+      } else {
+        const newPlayerName = prompt("Enter your name", "Anonymous");
+        if (newPlayerName) {
+          playerName = newPlayerName;
+        }
+      }
+      dispatch(gameActions.join(data.id, playerName));
     }
   }, [data, dispatch, socket]);
+  import_react4.default.useEffect(() => {
+    var _a;
+    if (leavingPlayer) {
+      (_a = notifRef.current) == null ? void 0 : _a.classList.add("show");
+      setTimeout(() => {
+        var _a2;
+        (_a2 = notifRef.current) == null ? void 0 : _a2.classList.remove("show");
+      }, 3e3);
+    }
+  }, [leavingPlayer]);
   return /* @__PURE__ */ import_react4.default.createElement("div", {
     className: "w-screen h-screen flex flex-col justify-center items-center"
   }, /* @__PURE__ */ import_react4.default.createElement("div", {
@@ -778,19 +982,25 @@ var GameScreen = () => {
     className: "text-xl font-exo mr-2"
   }, "Player Count:"), /* @__PURE__ */ import_react4.default.createElement("h1", {
     className: "text-xl"
-  }, dataState == null ? void 0 : dataState.gameData.playerCount)), /* @__PURE__ */ import_react4.default.createElement("div", {
+  }, players.length)), /* @__PURE__ */ import_react4.default.createElement("div", {
     className: "flex flex-row items-center"
   }, /* @__PURE__ */ import_react4.default.createElement("h1", {
     className: "text-xl font-exo mr-2"
   }, "is owner"), /* @__PURE__ */ import_react4.default.createElement("h1", {
     className: "text-xl"
-  }, (dataState == null ? void 0 : dataState.gameData.owner) === (dataState == null ? void 0 : dataState.playerData.id) ? "true" : "false")));
+  }, dataState && dataState.gameData.owner === dataState.playerData.id ? "true" : "false")), /* @__PURE__ */ import_react4.default.createElement("button", {
+    className: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
+    onClick: () => dispatch(gameActions.leave())
+  }, "Leave"), /* @__PURE__ */ import_react4.default.createElement("div", {
+    ref: notifRef,
+    className: (0, import_clsx2.default)("fixed bottom-0 hidden right-0 mr-4 mb-4 bg-yellow-200 rounded-xl")
+  }, /* @__PURE__ */ import_react4.default.createElement("p", null, "Player ", leavingPlayer && leavingPlayer.id, " has leaving the game")));
 };
 var id_default = GameScreen;
 
 // server-assets-manifest:@remix-run/dev/assets-manifest
 init_react();
-var assets_manifest_default = { "version": "11210de9", "entry": { "module": "/build/entry.client-SD7FNTHD.js", "imports": ["/build/_shared/chunk-CTGADP3U.js"] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "module": "/build/root-NLO6T6MV.js", "imports": ["/build/_shared/chunk-2FPGSXG3.js"], "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/$id": { "id": "routes/$id", "parentId": "root", "path": ":id", "index": void 0, "caseSensitive": void 0, "module": "/build/routes/$id-QGVUYMAL.js", "imports": void 0, "hasAction": false, "hasLoader": true, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/index": { "id": "routes/index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "module": "/build/routes/index-OVHVJEIC.js", "imports": void 0, "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false } }, "url": "/build/manifest-11210DE9.js" };
+var assets_manifest_default = { "version": "62bf166b", "entry": { "module": "/build/entry.client-SD7FNTHD.js", "imports": ["/build/_shared/chunk-CTGADP3U.js"] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "module": "/build/root-IGDXCTE6.js", "imports": ["/build/_shared/chunk-KZMBXYJV.js"], "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/$id": { "id": "routes/$id", "parentId": "root", "path": ":id", "index": void 0, "caseSensitive": void 0, "module": "/build/routes/$id-OM3X4U42.js", "imports": ["/build/_shared/chunk-XJLGPZ7R.js"], "hasAction": false, "hasLoader": true, "hasCatchBoundary": false, "hasErrorBoundary": false }, "routes/index": { "id": "routes/index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "module": "/build/routes/index-IQ3VKFMF.js", "imports": ["/build/_shared/chunk-XJLGPZ7R.js"], "hasAction": false, "hasLoader": false, "hasCatchBoundary": false, "hasErrorBoundary": false } }, "url": "/build/manifest-62BF166B.js" };
 
 // server-entry-module:@remix-run/dev/server-build
 var entry = { module: entry_server_exports };
@@ -865,6 +1075,9 @@ var GameController = class {
   getId() {
     return this.data.id;
   }
+  getPlayers() {
+    return this.players;
+  }
   getTotalPlayer() {
     return this.players.length;
   }
@@ -902,15 +1115,25 @@ var PlayerController = class {
   getData() {
     return this.data;
   }
+  leave() {
+    this.data = {
+      id: "",
+      name: "",
+      socketId: ""
+    };
+  }
 };
 
 // app/controllers/client.ts
 var import_uuid2 = require("uuid");
 var ClientController = class {
-  constructor(socket) {
+  constructor(socket, io2) {
     this.socket = socket;
+    this.server = io2;
     socket.on("disconnect", this.disconnect.bind(this));
+    socket.on("create", this.create.bind(this));
     socket.on("join", this.join.bind(this));
+    socket.on("leave", this.leave.bind(this));
   }
   disconnect() {
     this.socket.disconnect();
@@ -920,28 +1143,39 @@ var ClientController = class {
     printLog("warning", "CLIENT", "Removing CLIENT#", clientIndex);
     clients.splice(clientIndex, 1);
   }
-  getGame() {
-    return games.find((game) => game.getId() === this.socket.id);
+  create(data) {
+    const ownerData = {
+      id: (0, import_uuid2.v4)(),
+      name: data.playerName || "Owner",
+      socketId: this.socket.id
+    };
+    const newGameData = __spreadProps(__spreadValues({}, data.gameData), { owner: ownerData.id });
+    const owner = new PlayerController(ownerData);
+    const newGame = new GameController(newGameData);
+    newGame.addPlayer(owner);
+    games.push(newGame);
+    const joinData = {
+      gameData: newGame.getData(),
+      playerData: ownerData
+    };
+    printLog("info", "CLIENT", "Joining game room: ", newGame.getId());
+    this.socket.join(newGame.getId());
+    this.socket.emit("created", joinData);
+    printLog("info", "CLIENT", "New game created: ", newGame.getId());
   }
   join(data) {
-    console.log(data);
     let newPlayer = new PlayerController({
       id: data.playerData.id || (0, import_uuid2.v4)(),
-      name: "Anonymous",
+      name: data.playerData.name || generateName(1),
       socketId: this.socket.id
     });
+    console.log(data);
     let game = games.find((game2) => game2.getId() === data.gameData.id);
-    console.log(data.gameData);
     if (!game) {
-      game = new GameController(data.gameData);
-      game.setOwner(newPlayer.getId());
-      game.addPlayer(newPlayer);
-      games.push(game);
-      console.log("game created: ", game.getId());
+      printLog("warning", "CLIENT", "Game not found ", data.gameData.id);
+      this.socket.emit("notFound", data.gameData.id);
     } else {
-      console.log("game found: ", game.getId());
       const existingPlayer = game.getPlayerById(data.playerData.id);
-      console.log("existingPlayer: ", existingPlayer);
       if (!existingPlayer) {
         if (game.getTotalPlayer() < 4) {
           game.addPlayer(newPlayer);
@@ -951,13 +1185,29 @@ var ClientController = class {
           });
         }
       }
+      printLog("info", "CLIENT", "Joining game room: ", game.getId());
+      this.socket.join(game.getId());
+      const joinData = {
+        gameData: game.getData(),
+        playerData: newPlayer.getData()
+      };
+      this.socket.emit("joined", joinData);
+      const players = game.getPlayers();
+      const playerData = players.map((player) => player.getData());
+      this.server.in(game.getId()).emit("players", playerData);
     }
-    const joinData = {
-      gameData: game.getData(),
-      playerData: newPlayer.getData()
-    };
-    this.socket.data = game;
-    this.socket.emit("joined", joinData);
+  }
+  leave(data) {
+    printLog("warning", "CLIENT", "Leaving game: ", data.gameData.id);
+    const game = games.find((game2) => game2.getId() === data.gameData.id);
+    if (game) {
+      const player = game.getPlayerById(data.playerData.id);
+      printLog("warning", "PLAYER", "Leaving game: ", data.playerData.id);
+      if (player) {
+        this.server.in(game.getId()).emit("left", player.getData());
+        game.removePlayer(player);
+      }
+    }
   }
 };
 
@@ -970,7 +1220,7 @@ var ConnectionController = class {
   start() {
     this.io.on("connection", (socket) => {
       printLog("default", "SOCKET", "connected: ", socket.id);
-      const client = new ClientController(socket);
+      const client = new ClientController(socket, this.io);
       clients.push(client);
     });
   }

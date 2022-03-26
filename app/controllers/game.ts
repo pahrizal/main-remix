@@ -7,7 +7,7 @@ import PlayerController from "./player";
  * @constant {GameController[]}
  * @default []
  */
-export const games: GameController[] = [];
+export let games: GameController[] = [];
 export type GameEvent = "kick" | "kicked";
 export interface GameData {
   id: string;
@@ -55,6 +55,9 @@ export default class GameController {
   }
   getId() {
     return this.data.id;
+  }
+  getPlayers() {
+    return this.players;
   }
   getTotalPlayer() {
     return this.players.length;

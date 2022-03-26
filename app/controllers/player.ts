@@ -24,4 +24,11 @@ export default class PlayerController {
   getData() {
     return this.data;
   }
+  leave() {
+    this.data = {
+      id: "",
+      name: "",
+      socketId: "",
+    };
+  }
 }
