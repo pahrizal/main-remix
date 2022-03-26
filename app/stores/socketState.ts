@@ -1,5 +1,6 @@
 import { Reducer } from "redux";
 import { Socket } from "socket.io-client";
+import { GameData } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import { ClientEvent, JoinData } from "../controllers/client";
 import { gameActions, GameActions } from "./gameState";
@@ -123,6 +124,20 @@ export const socketActions = {
 
       // stop listening for a player left the game event
       socket.off("left");
+    };
+  },
+
+  // socket action to start the game
+  startGame: (
+    onStarted: (data: GameData) => void
+  ): ThunkAction<SocketActions | GameActions> => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      const gameData = getState().game.data;
+      if (!socket) return;
+      // emit the start game event
+      socket.emit("start", gameData);
+      socket.on("started", onStarted);
     };
   },
 };

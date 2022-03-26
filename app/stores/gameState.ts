@@ -190,6 +190,8 @@ export const gameActions = {
       socket.emit("join", joinData);
     };
   },
+
+  //redux action to leave the game
   leave: (): ThunkAction<GameActions | SocketActions> => {
     return async (dispatch, getState) => {
       const socket = getState().socket.client;
@@ -210,6 +212,8 @@ export const gameActions = {
       document.location = "/";
     };
   },
+
+  // redux action to toggle if the game is not found
   toggleNotFound: (): ThunkAction<GameActions> => {
     return async (dispatch, getState) => {
       const notFound = getState().game.notFound;
@@ -217,6 +221,18 @@ export const gameActions = {
         type: GameActionsTypes.SET_GAME_NOT_FOUND,
         payload: !notFound,
       });
+    };
+  },
+
+  // redux action to start the game
+  start: (): ThunkAction<GameActions | SocketActions> => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      const gameData = getState().game.data;
+      if (!socket || !gameData) return;
+      socketActions.startGame((gameData) => {
+        console.log("game started", gameData);
+      })(dispatch, getState);
     };
   },
 };
