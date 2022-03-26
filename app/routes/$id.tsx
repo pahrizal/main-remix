@@ -4,18 +4,35 @@ import { json, LoaderFunction, useLoaderData, useNavigate } from "remix";
 import GameTable from "~/components/GameTable";
 import WaitingRoom from "~/components/WaitingRoom";
 import { JoinData } from "~/controllers/client";
-import { GameData } from "~/controllers/game";
+import { GameData, games, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import { AppState } from "~/stores";
-import { gameActions, GameStatus } from "~/stores/gameState";
+import { gameActions } from "~/stores/gameState";
 
 export const loader: LoaderFunction = async ({ params }) => {
+  // get related game from game list
+  const game = games.find((game) => game.getId() === params.id);
+
+  // if game is not found, set notFound to true
+  if (!game) {
+    return json({ ...params });
+  }
+
+  // if game is found and game is still in waiting state, return game data
+  if (game.isWaiting()) {
+    return json({ ...game.getData(), status: game.getStatus(), ...params });
+  }
   return json({ ...params });
 };
 
+interface LoaderData extends GameData {
+  status: GameStatus;
+  id: string;
+}
+
 const GameScreen = () => {
   const nav = useNavigate();
-  const data = useLoaderData<GameData>();
+  const data = useLoaderData<LoaderData>();
   const socket = useSelector((state: AppState) => state.socket.client);
   const notFound = useSelector((state: AppState) => state.game.notFound);
   const dataState = useSelector((state: AppState) => state.game.data);
@@ -33,7 +50,7 @@ const GameScreen = () => {
   }, [dispatch, nav, notFound]);
 
   React.useEffect(() => {
-    if (data && data.id && socket) {
+    if (data && data.id && socket && data.status === GameStatus.WAITING) {
       let playerName = "Anonymous";
       // get local storage data
       const localData = localStorage.getItem(data.id);
@@ -48,6 +65,9 @@ const GameScreen = () => {
         }
       }
       dispatch(gameActions.join(data.id, playerName));
+    } else {
+      // redirect to home when game is not found
+      window.location.href = "/";
     }
   }, [data, dispatch, socket]);
 

@@ -1,17 +1,11 @@
 import { Reducer } from "redux";
 import { JoinData } from "~/controllers/client";
-import { GameData } from "~/controllers/game";
+import { GameData, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import { generateName } from "~/utils/helper";
 import { ThunkAction } from "./index";
 import { socketActions, SocketActions } from "./socketState";
 
-export enum GameStatus {
-  WAITING = "WAITING",
-  STARTED = "STARTED",
-  FINISHED = "FINISHED",
-  BUSY = "BUSY",
-}
 export interface GameState {
   status: GameStatus;
   data: JoinData | null;

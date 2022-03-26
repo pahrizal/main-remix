@@ -114,7 +114,14 @@ export default class ClientController {
       this.socket.emit("notFound", data.gameData.id);
       return;
     }
-    console.log(data);
+
+    // check if the game has not started yet
+    if (game.isStarted()) {
+      printLog("warning", "CLIENT", "Game already started ", data.gameData.id);
+      this.socket.emit("notFound", data.gameData.id);
+      return;
+    }
+
     // check if current player is already in the game
     const existingPlayer = game.getPlayerById(data.playerData.id);
     if (!existingPlayer) {

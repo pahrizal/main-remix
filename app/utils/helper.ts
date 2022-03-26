@@ -57,7 +57,9 @@ export const printLog = (
     `[${TerminalColor.FgMagenta}${currentTimestamp() + TerminalColor.Reset}][${
       TerminalColor.FgCyan
     }${label}${TerminalColor.Reset}]`,
-    `${color}${message.join("")}${TerminalColor.Reset}`
+    color,
+    ...message,
+    TerminalColor.Reset
   );
 };
 

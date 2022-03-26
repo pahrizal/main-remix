@@ -9,6 +9,14 @@ import PlayerController from "./player";
  */
 export let games: GameController[] = [];
 export type GameEvent = "kick" | "kicked";
+export enum GameStatus {
+  WAITING = "WAITING",
+  STARTED = "STARTED",
+  FINISHED = "FINISHED",
+  BUSY = "BUSY",
+  READY = "READY",
+}
+
 export interface GameData {
   id: string;
   level: number;
@@ -29,6 +37,7 @@ export default class GameController {
     owner: "",
     playerCount: 0,
   };
+  private status: GameStatus = GameStatus.WAITING;
   private players: PlayerController[] = [];
 
   constructor(data: GameData) {
@@ -88,5 +97,27 @@ export default class GameController {
 
   start() {
     printLog("info", "GAME", "Game started: ", this.data.id);
+    this.status = GameStatus.STARTED;
+  }
+  setStatus(status: GameStatus) {
+    this.status = status;
+  }
+  getStatus() {
+    return this.status;
+  }
+  isStarted() {
+    return this.status === GameStatus.STARTED;
+  }
+  isReady() {
+    return this.status === GameStatus.READY;
+  }
+  isFinished() {
+    return this.status === GameStatus.FINISHED;
+  }
+  isWaiting() {
+    return this.status === GameStatus.WAITING;
+  }
+  isBusy() {
+    return this.status === GameStatus.BUSY;
   }
 }
