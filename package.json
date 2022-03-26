@@ -22,10 +22,7 @@
     "generate:css": "npx tailwindcss -o ./app/assets/styles/tailwind.css",
     "postinstall": "remix setup node",
     "start": "cross-env NODE_ENV=production node ./build/index.js",
-    "heroku:push": "heroku container:push main-remix -a main-remix",
-    "heroku:release": "heroku container:release main-remix -a main-remix",
-    "heroku:postbuild": "npm run build",
-    "deploy:heroku": "npm-run-all build heroku:push heroku:release"
+    "heroku:postbuild": "npm run build"
   },
   "dependencies": {
     "@remix-run/express": "^1.3.3",
