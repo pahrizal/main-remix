@@ -24,6 +24,7 @@ const WaitingRoom: React.FC<Props> = ({
   onStart,
   showStart,
 }) => {
+  const [disableStart, setDisableStart] = React.useState(false);
   return (
     <div className="flex flex-col z-10 w-screen h-screen backdrop-blur-2xl justify-center items-center">
       <p className="text-center text-2xl font-exo mb-8">
@@ -47,12 +48,22 @@ const WaitingRoom: React.FC<Props> = ({
       </div>
       <div className="flex flex-row space-x-4 items-center mt-8">
         <Button
-          className="bg-slate-500 font-exo hover:bg-slate-700 hover:text-slate-100 text-slate-900 font-bold py-4 px-8"
+          className="bg-slate-500 font-exo hover:bg-slate-600 hover:text-slate-100 text-slate-900 font-bold py-4 px-8"
           onClick={onAbort}
         >
           {abortText}
         </Button>
-        {showStart && <Button onClick={onStart}>{startText}</Button>}
+        {showStart && (
+          <Button
+            disabled={disableStart}
+            onClick={(e) => {
+              onStart && onStart();
+              setDisableStart(true);
+            }}
+          >
+            {startText}
+          </Button>
+        )}
       </div>
     </div>
   );

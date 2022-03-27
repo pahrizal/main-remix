@@ -1,6 +1,7 @@
 import { Socket } from "socket.io";
 import { v4 as uuidv4 } from "uuid";
 import { printLog } from "~/utils/helper";
+import { Deck } from "./deck";
 import PlayerController from "./player";
 /**
  * This constant is used to store the game created by the client
@@ -18,18 +19,26 @@ export enum GameStatus {
   UNDEFINED = "UNDEFINED",
 }
 
+export interface Card {
+  image: string;
+  value: number;
+  suit: string;
+  code: string;
+}
+
 export interface GameData {
   id: string;
   level: number;
   owner: string;
   playerCount?: number;
+  cardOnTable?: Card[]; // stack of card on table, the last card is the top card
+  nextPlayer: string; // player id of the next turn
 }
+
 /**
  * This class is used to manage the game
  * @class GameController
- * @param {Socket} socket - The socket connection created by the client
  * @param {GameData} data - The game id
- * @param {PlayerController[]} players - The player list inside the game
  */
 export default class GameController {
   private data: GameData = {
@@ -37,13 +46,31 @@ export default class GameController {
     level: 1,
     owner: "",
     playerCount: 0,
+    cardOnTable: [],
+    nextPlayer: "",
   };
   private status: GameStatus = GameStatus.WAITING;
   private players: PlayerController[] = [];
-
+  private deck: Deck;
+  private freeFold: boolean;
   constructor(data: GameData) {
-    this.data = { ...data, playerCount: this.players.length };
+    this.data = {
+      ...data,
+      playerCount: this.players.length,
+      nextPlayer: data.owner,
+    };
+    this.freeFold = false;
+    // init deck
+    this.deck = new Deck();
   }
+
+  setFreeFold(freeFold: boolean) {
+    this.freeFold = freeFold;
+  }
+  isFreeFold() {
+    return this.freeFold;
+  }
+
   addPlayer(player: PlayerController) {
     this.players.push(player);
     printLog(
@@ -62,6 +89,7 @@ export default class GameController {
   }
   setOwner(playerId: string) {
     this.data.owner = playerId;
+    this.data.nextPlayer = playerId;
   }
   getId() {
     return this.data.id;
@@ -95,10 +123,49 @@ export default class GameController {
     );
     this.data.playerCount = this.players.length;
   }
+  async drawCardToTable() {
+    const cards = await this.deck.draw();
+    this.data.cardOnTable = cards;
+  }
+  getCardOnTable() {
+    return this.data.cardOnTable;
+  }
+  pushCardOnTable(card: Card) {
+    this.data.cardOnTable?.push(card);
+  }
+  async start() {
+    await this.deck.shuffle();
+    const cardPerPlayer = Math.floor(51 / this.players.length);
+    // draw card for each player and send to client
+    for (const player of this.players) {
+      const cards = await this.deck.draw(cardPerPlayer);
+      player.setCards(cards);
+    }
+    // draw one card for the game table
+    await this.drawCardToTable();
 
-  start() {
     printLog("info", "GAME", "Game started: ", this.data.id);
     this.status = GameStatus.STARTED;
+  }
+  setNextPlayer(playerId: string) {
+    this.data.nextPlayer = playerId;
+  }
+  getNextPlayer() {
+    //get current player index
+    const currentPlayerIndex = this.players.findIndex(
+      (player) => player.getId() === this.data.nextPlayer
+    );
+    //get next player index
+    let nextPlayerIndex = currentPlayerIndex + 1;
+    if (nextPlayerIndex > this.players.length - 1) {
+      nextPlayerIndex = 0;
+    }
+    const nextPlayer = this.players[nextPlayerIndex];
+    this.data.nextPlayer = nextPlayer.getId();
+    return nextPlayer;
+  }
+  getCurrentPlayer() {
+    return this.getPlayerById(this.data.nextPlayer);
   }
   setStatus(status: GameStatus) {
     this.status = status;

@@ -92,3 +92,19 @@ export function generateName(wordLen: number = 2) {
 
 export const randomColor = () =>
   `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+
+/**
+ * @method preloadImage - Loads an image from an URL to pre-cache in the browser and returns a promise
+ * @param {string} imgPath - The URL to the image
+ * @returns {Promise<HTMLImageElement>}
+ */
+export const preloadImage = async (
+  imgPath: string
+): Promise<HTMLImageElement> =>
+  new Promise((res) => {
+    const newImg = new Image();
+    newImg.onload = function () {
+      res(newImg);
+    };
+    newImg.src = imgPath;
+  });

@@ -1,10 +1,12 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { json, LoaderFunction, useLoaderData, useNavigate } from "remix";
+import Alert from "~/components/Alert";
 import GameTable from "~/components/GameTable";
+import Toolbar from "~/components/Toolbar";
 import WaitingRoom from "~/components/WaitingRoom";
 import { JoinData } from "~/controllers/client";
-import { GameData, games, GameStatus } from "~/controllers/game";
+import { Card, GameData, games, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import { AppState } from "~/stores";
 import { gameActions } from "~/stores/gameState";
@@ -36,12 +38,23 @@ interface LoaderData extends GameData {
 const GameScreen = () => {
   const data = useLoaderData<LoaderData>();
   const socket = useSelector((state: AppState) => state.socket.client);
-  const notFound = useSelector((state: AppState) => state.game.notFound);
   const dataState = useSelector((state: AppState) => state.game.data);
+  const currentPlayer = useSelector(
+    (state: AppState) => state.game.currentPlayer
+  );
+  const cards = useSelector((state: AppState) => state.game.cards);
   const players = useSelector((state: AppState) => state.game.players);
   const gameStatus = useSelector((state: AppState) => state.game.status);
+  const cardOnTable = useSelector((state: AppState) => state.game.tableCard);
+  const [showAlert, setShowAlert] = React.useState(false);
   const dispatch = useDispatch();
-
+  const handleLeave = () => {
+    dispatch(gameActions.leave());
+  };
+  const handleFold = (card: Card) => {
+    console.log("Fold", card);
+    dispatch(gameActions.foldCard(card));
+  };
   // use effect to detect if the game is not found
   React.useEffect(() => {
     if (data.status === GameStatus.UNDEFINED) {
@@ -83,11 +96,12 @@ const GameScreen = () => {
       }
     }
   }, [data, dispatch, socket]);
-  console.log("game status", data);
+
   return (
     <div className="w-screen h-screen flex flex-col justify-center items-center">
       {gameStatus === GameStatus.WAITING &&
-        data.status === GameStatus.WAITING && (
+        data.status === GameStatus.WAITING &&
+        cards.length === 0 && (
           <WaitingRoom
             players={players}
             ownerId={dataState?.gameData.owner}
@@ -98,12 +112,35 @@ const GameScreen = () => {
         )}
       <GameTable
         players={players}
+        cardOnTable={cardOnTable}
         blur={
           gameStatus === GameStatus.WAITING &&
-          data.status === GameStatus.WAITING
+          data.status === GameStatus.WAITING &&
+          cards.length === 0
         }
+        currentPlayer={dataState?.playerData}
         ownerId={dataState?.gameData.owner}
+        nextPlayer={currentPlayer}
+        cards={cards}
+        onFold={handleFold}
       />
+      <Toolbar
+        blur={
+          gameStatus === GameStatus.WAITING &&
+          data.status === GameStatus.WAITING &&
+          cards.length === 0
+        }
+        canPass={dataState?.playerData.id === currentPlayer}
+        onLeave={() => setShowAlert(true)}
+        onPass={() => dispatch(gameActions.passToNextPlayer())}
+      />
+      <Alert
+        show={showAlert}
+        onCancel={() => setShowAlert(false)}
+        onConfirm={handleLeave}
+      >
+        <p>Are you sure want to leave the game now?</p>
+      </Alert>
     </div>
   );
 };
