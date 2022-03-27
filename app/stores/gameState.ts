@@ -14,6 +14,7 @@ export interface GameState {
   cards: Card[];
   tableCard: Card[];
   currentPlayer: string;
+  hasFreeFold: boolean;
 }
 
 export const initialGameState: GameState = {
@@ -24,6 +25,7 @@ export const initialGameState: GameState = {
   status: GameStatus.WAITING,
   tableCard: [],
   currentPlayer: "",
+  hasFreeFold: false,
 };
 
 interface GameActionTypes {
@@ -34,6 +36,7 @@ interface GameActionTypes {
   readonly SET_CARDS: "SET_CARDS";
   readonly SET_TABLE_CARD: "SET_TABLE_CARD";
   readonly SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER";
+  readonly SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD";
 }
 
 const GameActionsTypes: GameActionTypes = {
@@ -44,6 +47,7 @@ const GameActionsTypes: GameActionTypes = {
   SET_CARDS: "SET_CARDS",
   SET_TABLE_CARD: "SET_TABLE_CARD",
   SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER",
+  SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD",
 };
 
 interface SetGameData {
@@ -75,6 +79,11 @@ interface SetGameNotFound {
   payload: typeof initialGameState.notFound;
 }
 
+interface SetHasFreeFold {
+  type: "SET_HAS_FREE_FOLD";
+  payload: typeof initialGameState.hasFreeFold;
+}
+
 export type GameActions =
   | SetGameData
   | SetGameNotFound
@@ -82,7 +91,8 @@ export type GameActions =
   | SetGameCard
   | SetCurrentPlayer
   | SetTableCard
-  | SetGameStatus;
+  | SetGameStatus
+  | SetHasFreeFold;
 
 export const gameActions = {
   //game action to set current player
@@ -117,6 +127,19 @@ export const gameActions = {
       });
     };
   },
+
+  // game action to set free fold status
+  setHasFreeFold: (
+    state: boolean
+  ): ThunkAction<GameActions | SocketActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_HAS_FREE_FOLD,
+        payload: state,
+      });
+    };
+  },
+
   passToNextPlayer: (): ThunkAction<GameActions | SocketActions> => {
     return async (dispatch, getState) => {
       const socket = getState().socket.client;
@@ -136,7 +159,6 @@ export const gameActions = {
       if (!socket || !data) return;
       //if the turn is not for current player then return
       if (currentPlayerTurn !== data.playerData.id) {
-        console.log("not your turn", currentPlayerTurn, data.playerData.id);
         return;
       }
 
@@ -186,7 +208,6 @@ export const gameActions = {
         type: GameActionsTypes.SET_PLAYERS,
         payload: [...players, player],
       });
-      console.log("player added", player);
     };
   },
 
@@ -304,7 +325,6 @@ export const gameActions = {
           },
         };
       }
-      console.log("sending join data", joinData);
       // send the join request to the server
       socket.emit("join", joinData);
     };
@@ -359,7 +379,6 @@ export const gameActions = {
       const socket = getState().socket.client;
       const gameData = getState().game.data;
       if (!socket || !gameData) return;
-      console.log("sending start game request");
       socket.emit("start", gameData);
     };
   },
@@ -410,6 +429,11 @@ export const GameReducer: Reducer<GameState, GameActions> = (
       return {
         ...state,
         cards: action.payload,
+      };
+    case GameActionsTypes.SET_HAS_FREE_FOLD:
+      return {
+        ...state,
+        hasFreeFold: action.payload,
       };
 
     default:

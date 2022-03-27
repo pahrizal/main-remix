@@ -67,7 +67,6 @@ export const socketActions = {
       if (!socket) return;
       // listen response from server when game created
       socket.on("created", (payload: JoinData) => {
-        console.log("game created", payload);
         // dispatch game action to set the game data
         gameActions.setGameData(payload)(dispatch, getState);
         gameActions.setCurrentPlayer(payload.gameData.nextPlayer)(
@@ -80,7 +79,6 @@ export const socketActions = {
 
       // listen to new player joined event
       socket.on("players", (payload: PlayerData[]) => {
-        console.log("new player list", payload);
         // add player to the game
         gameActions.setPlayers(payload)(dispatch, getState);
       });
@@ -92,7 +90,6 @@ export const socketActions = {
 
       // listen to the response from the server
       socket.on("joined", (payload: JoinData) => {
-        console.log("joined", payload);
         // dispatch game action to set the game data
         gameActions.setGameData(payload)(dispatch, getState);
         gameActions.setCurrentPlayer(payload.gameData.nextPlayer)(
@@ -105,14 +102,12 @@ export const socketActions = {
 
       // listen for the player left the game event
       socket.on("left", (payload: PlayerData) => {
-        console.log(payload.name, "has left the game");
         // remove player from the player list
         gameActions.removePlayer(payload.id)(dispatch, getState);
       });
 
       // listen for the game start event
       socket.on("started", (payload: JoinData) => {
-        console.log("game started", payload);
         // dispatch game action to set the game data
         gameActions.setGameData(payload)(dispatch, getState);
         gameActions.setCurrentPlayer(payload.gameData.nextPlayer)(
@@ -124,20 +119,21 @@ export const socketActions = {
 
       //listen for cards data event
       socket.on("cards", (payload: Card[]) => {
-        console.log("cards", payload);
         gameActions.setCards(payload)(dispatch, getState);
       });
 
       // listen for current card on the table
       socket.on("tableCard", (payload: Card[]) => {
-        console.log("tableCard", payload);
         gameActions.setTableCard(payload)(dispatch, getState);
       });
 
       // listen for the game data event
       socket.on("nextPlayer", (playerId: string) => {
-        console.log("nextPlayer", playerId);
         gameActions.setCurrentPlayer(playerId)(dispatch, getState);
+      });
+      // listen for freeFold event
+      socket.on("freeFold", (state: boolean) => {
+        gameActions.setHasFreeFold(state)(dispatch, getState);
       });
     };
   },

@@ -19,12 +19,10 @@ export default function Index() {
   const nav = useNavigate();
   const handleRoomInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    if (!value) return;
     setJoinId(value);
   };
   const handleNameInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    if (!value) return;
     setPlayerName(value);
   };
   const handleJoin = () => {
@@ -53,7 +51,6 @@ export default function Index() {
 
   React.useEffect(() => {
     if (!data) return;
-    console.log(data);
     nav(data.gameData.id);
   }, [data]);
 

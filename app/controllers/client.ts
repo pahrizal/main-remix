@@ -89,7 +89,6 @@ export default class ClientController {
     };
 
     // join the game room
-    printLog("info", "CLIENT", "Joining game room: ", newGame.getId());
     this.socket.join(newGame.getId());
 
     // send the data to the client
@@ -150,7 +149,15 @@ export default class ClientController {
     }
 
     // join the game room
-    printLog("info", "CLIENT", "Joining game room: ", game.getId());
+    printLog(
+      "info",
+      "PLAYER",
+      "Joining game: ",
+      newPlayer.getId(),
+      "(",
+      newPlayer.getName(),
+      ")"
+    );
     this.socket.join(game.getId());
 
     // prepare the data to send to the client
@@ -179,16 +186,23 @@ export default class ClientController {
    * @returns {void}
    */
   leave(data: JoinData): void {
-    printLog("warning", "CLIENT", "Leaving game: ", data.gameData.id);
     // get game data from socket data
     const game = games.find((game) => game.getId() === data.gameData.id);
     // if game is defined, proceed removing the player from the game
     if (game) {
       const player = game.getPlayerById(data.playerData.id);
-      printLog("warning", "PLAYER", "Leaving game: ", data.playerData.id);
 
       // if the player is found, then we can remove the player from the game
       if (player) {
+        printLog(
+          "warning",
+          "PLAYER",
+          "Leaving game: ",
+          data.playerData.id,
+          "(",
+          player.getName(),
+          ")"
+        );
         // broadcast to other players that the player left
         this.server
           .in(game.getId())
@@ -205,7 +219,6 @@ export default class ClientController {
    * @returns {void}
    */
   async start(data: JoinData): Promise<void> {
-    printLog("info", "CLIENT", "Starting game: ", data);
     // get game data from game list
     const game = games.find((game) => game.getId() === data.gameData.id);
 
@@ -234,7 +247,6 @@ export default class ClientController {
   }
 
   foldCard(data: { card: Card; playerId: string; gameId: string }): void {
-    printLog("info", "CLIENT", "Folding card: ", data);
     // get game data from game list
     const game = games.find((game) => game.getId() === data.gameId);
     if (!game) {
@@ -249,20 +261,31 @@ export default class ClientController {
     //get player
     const player = game.getPlayerById(data.playerId);
     if (player) {
-      //compare last card on table with card that folded
-      /**
-       * TODO: for now we are not checking if the card suit is match or not. just comparing the higest value
-       */
-
       const cardOnTable = game.getCardOnTable();
       if (!cardOnTable) return;
       const lastCardOnTable = cardOnTable[cardOnTable.length - 1];
+
+      /**
+       * This is the core step to decide the player can fold the card or not
+       * by comparing the card on table with the card the player folded (highest value)
+       * 1. if the card on table is higher than the card the player folded, then the player can fold the card
+       * 2. and the card on table doesn't have the same suit with the folded one, then the player can not fold the card
+       * except for the player that having free fold (because next player pass the turn) until his turn
+       */
       if (
         (lastCardOnTable.value < data.card.value &&
           lastCardOnTable.suit === data.card.suit) ||
-        game.isFreeFold()
+        (game.isFreeFold() && game.getFreeFoldOwner() === data.playerId)
       ) {
-        game.setFreeFold(false);
+        // reset the free fold, since another player having higher card or this is the player that having free fold
+        const freeFoldPlayer = game.getFreeFoldPlayer();
+        if (freeFoldPlayer) {
+          game.resetFreeFold();
+          // tell the free fold owner that his free fold is over
+          this.server
+            .in(freeFoldPlayer.getSocketId())
+            .emit("freeFold", game.isFreeFold());
+        }
         // add card to table
         game.pushCardOnTable(data.card);
         // remove card from player
@@ -271,19 +294,9 @@ export default class ClientController {
         const currentCard = player.getCards();
         // emit new cards to player
         this.socket.emit("cards", currentCard);
-        printLog("info", "CLIENT", "current player card: ", currentCard);
 
         const nextPlayer = game.getNextPlayer();
-        // send game data to all players
-        const gameData = game.getData();
 
-        printLog(
-          "info",
-          "CLIENT",
-          "next player: ",
-          nextPlayer.getId(),
-          gameData.nextPlayer
-        );
         this.server.in(game.getId()).emit("nextPlayer", nextPlayer.getId());
 
         // send the current card on table all players
@@ -319,9 +332,31 @@ export default class ClientController {
       );
       return;
     }
-    game.setFreeFold(true);
+
+    // since the current player is PASSING his turn,
+    // set free fold to the previous player (if the free fold is not already assigned)
+    if (!game.isFreeFold()) {
+      const prevPlayer = game.getPreviousPlayer();
+      game.setFreeFold(true, prevPlayer.getId());
+      // let the player now that he has a FREE FOLD turn
+      this.server
+        .in(prevPlayer.getSocketId())
+        .emit("freeFold", game.isFreeFold());
+
+      printLog(
+        "success",
+        "CLIENT",
+        "Assigning FREE FOLD to player: ",
+        prevPlayer.getId(),
+        "(",
+        prevPlayer.getName(),
+        ")"
+      );
+    }
+
     const nextPlayer = game.getNextPlayer();
     game.setNextPlayer(nextPlayer.getId());
+
     // send next player update to all players
     this.server.in(game.getId()).emit("nextPlayer", nextPlayer.getId());
 
