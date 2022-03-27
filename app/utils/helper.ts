@@ -57,20 +57,17 @@ export const printLog = (
     `[${TerminalColor.FgMagenta}${currentTimestamp() + TerminalColor.Reset}][${
       TerminalColor.FgCyan
     }${label}${TerminalColor.Reset}]`,
-    `${color}${message.join("")}${TerminalColor.Reset}`
+    color,
+    ...message,
+    TerminalColor.Reset
   );
 };
 
-/*
-(c) by Thomas Konings
-Random Name Generator for Javascript
-*/
-
-function capFirst(text: string) {
+export function capFirst(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function getRandomInt(min: number, max: number) {
+export function getRandomInt(min: number = 0, max: number = 999) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
@@ -92,3 +89,22 @@ export function generateName(wordLen: number = 2) {
   }
   return output.join("");
 }
+
+export const randomColor = () =>
+  `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+
+/**
+ * @method preloadImage - Loads an image from an URL to pre-cache in the browser and returns a promise
+ * @param {string} imgPath - The URL to the image
+ * @returns {Promise<HTMLImageElement>}
+ */
+export const preloadImage = async (
+  imgPath: string
+): Promise<HTMLImageElement> =>
+  new Promise((res) => {
+    const newImg = new Image();
+    newImg.onload = function () {
+      res(newImg);
+    };
+    newImg.src = imgPath;
+  });

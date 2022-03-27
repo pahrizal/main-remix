@@ -1,6 +1,6 @@
 import React from "react";
 import { Provider, useDispatch } from "react-redux";
-import type { MetaFunction } from "remix";
+import { json, LoaderFunction, MetaFunction, useLoaderData } from "remix";
 import {
   Links,
   LinksFunction,
@@ -77,7 +77,20 @@ function App() {
   );
 }
 
+// loader function to get environment from server
+export const loader: LoaderFunction = () => {
+  return json({ env: process.env.NODE_ENV });
+};
+
+// declare window object as any to avoid ts error
+declare const window: any;
+
 export default function AppWithRedux() {
+  const data = useLoaderData<{ env: string }>();
+  React.useEffect(() => {
+    // store env in global window object
+    window.ENV = data.env;
+  }, []);
   return (
     <Provider store={store}>
       <App />

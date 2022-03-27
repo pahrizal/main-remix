@@ -1,39 +1,68 @@
-import clsx from "clsx";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { json, LoaderFunction, useLoaderData } from "remix";
-import Button from "~/components/button";
-import PlayerAvatar from "~/components/playerAvatar";
+import { json, LoaderFunction, useLoaderData, useNavigate } from "remix";
+import Alert from "~/components/Alert";
+import GameTable from "~/components/GameTable";
+import Toolbar from "~/components/Toolbar";
+import WaitingRoom from "~/components/WaitingRoom";
 import { JoinData } from "~/controllers/client";
-import { GameData } from "~/controllers/game";
+import { Card, GameData, games, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import { AppState } from "~/stores";
 import { gameActions } from "~/stores/gameState";
 
 export const loader: LoaderFunction = async ({ params }) => {
-  return json({ ...params });
+  // get related game from game list
+  const game = games.find((game) => game.getId() === params.id);
+
+  // if game is not found, set gameExist to false
+  if (!game) {
+    return json({ ...params, players: [], status: GameStatus.UNDEFINED });
+  }
+
+  // if game is found and game is still in waiting state, return game data
+  return json({
+    ...game.getData(),
+    players: game.getPlayers().map((p) => p.getId()),
+    status: game.getStatus(),
+    ...params,
+  });
 };
 
-const GameScreen = () => {
-  const notifRef = React.useRef<HTMLDivElement>(null);
-  const data = useLoaderData<GameData>();
-  const [leavingPlayer, setLeavingPlayer] = React.useState<PlayerData | null>(
-    null
-  );
-  const socket = useSelector((state: AppState) => state.socket.client);
-  const notFound = useSelector((state: AppState) => state.game.notFound);
-  const dataState = useSelector((state: AppState) => state.game.data);
-  const players = useSelector((state: AppState) => state.game.players);
-  const dispatch = useDispatch();
+interface LoaderData extends GameData {
+  status: GameStatus;
+  id: string;
+  players: string[];
+}
 
+const GameScreen = () => {
+  const data = useLoaderData<LoaderData>();
+  const socket = useSelector((state: AppState) => state.socket.client);
+  const dataState = useSelector((state: AppState) => state.game.data);
+  const currentPlayer = useSelector(
+    (state: AppState) => state.game.currentPlayer
+  );
+  const cards = useSelector((state: AppState) => state.game.cards);
+  const players = useSelector((state: AppState) => state.game.players);
+  const gameStatus = useSelector((state: AppState) => state.game.status);
+  const cardOnTable = useSelector((state: AppState) => state.game.tableCard);
+  const [showAlert, setShowAlert] = React.useState(false);
+  const dispatch = useDispatch();
+  const handleLeave = () => {
+    dispatch(gameActions.leave());
+  };
+  const handleFold = (card: Card) => {
+    console.log("Fold", card);
+    dispatch(gameActions.foldCard(card));
+  };
   // use effect to detect if the game is not found
   React.useEffect(() => {
-    if (notFound) {
-      alert("Game not found");
+    if (data.status === GameStatus.UNDEFINED) {
       dispatch(gameActions.toggleNotFound());
-      document.location = "/";
+      // redirect to home when game is not found
+      window.location.href = "/";
     }
-  }, [notFound]);
+  }, [data]);
 
   React.useEffect(() => {
     if (data && data.id && socket) {
@@ -41,99 +70,77 @@ const GameScreen = () => {
       // get local storage data
       const localData = localStorage.getItem(data.id);
       if (localData) {
-        // if local data is found, get player name there
+        // if local data is found, get player name there and join the game
         const localDataObj: JoinData = JSON.parse(localData) as JoinData;
         playerName = localDataObj.playerData.name || "Anonymous";
+        if (data.players.includes(localDataObj.playerData.id)) {
+          dispatch(gameActions.join(data.id, playerName));
+        } else {
+          dispatch(gameActions.start());
+        }
       } else {
-        const newPlayerName = prompt("Enter your name", "Anonymous");
-        if (newPlayerName) {
-          playerName = newPlayerName;
+        // if local data is not found, create a new player and join the game if the game is not full or still in waiting state
+        if (
+          data.status === GameStatus.WAITING &&
+          data.playerCount &&
+          data.playerCount < 4
+        ) {
+          const newPlayerName = prompt("Enter your name", "Anonymous");
+          if (newPlayerName) {
+            playerName = newPlayerName;
+          }
+          dispatch(gameActions.join(data.id, playerName));
+        } else {
+          window.location.href = "/";
         }
       }
-      dispatch(gameActions.join(data.id, playerName));
     }
   }, [data, dispatch, socket]);
 
-  // trigger notification using effect when player is leaving
-  React.useEffect(() => {
-    if (leavingPlayer) {
-      notifRef.current?.classList.add("show");
-      setTimeout(() => {
-        notifRef.current?.classList.remove("show");
-      }, 3000);
-    }
-  }, [leavingPlayer]);
-
   return (
     <div className="w-screen h-screen flex flex-col justify-center items-center">
-      <div className="hidden fixed top-0 right-0 m-4 text-sm">
-        <div className="flex flex-row items-center">
-          <h1 className="font-exo mr-2">Player Name:</h1>
-          <h1 className="">{dataState?.playerData.name}</h1>
-        </div>
-        <div className="flex flex-row items-center">
-          <h1 className="font-exo mr-2">Game ID:</h1>
-          <h1 className="">{dataState?.gameData.id}</h1>
-        </div>
-        <div className="flex flex-row items-center">
-          <h1 className="font-exo mr-2">Player ID:</h1>
-          <h1 className="">{dataState?.playerData.id}</h1>
-        </div>
-        <div className="flex flex-row items-center">
-          <h1 className="font-exo mr-2">Player Count:</h1>
-          <h1 className="">{players.length}</h1>
-        </div>
-        <div className="flex flex-row items-center">
-          <h1 className="font-exo mr-2">is owner</h1>
-          <h1 className="">
-            {dataState && dataState.gameData.owner === dataState.playerData.id
-              ? "true"
-              : "false"}
-          </h1>
-        </div>
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={() => dispatch(gameActions.leave())}
-        >
-          Leave
-        </button>
-        <div
-          ref={notifRef}
-          className={clsx(
-            "fixed bottom-0 hidden right-0 mr-4 mb-4 bg-yellow-200 rounded-xl"
-          )}
-        >
-          <p>Player {leavingPlayer && leavingPlayer.id} has leaving the game</p>
-        </div>
-      </div>
-      <p className="text-center text-2xl font-exo mb-8">
-        Waiting another player...
-      </p>
-      <div className="flex flex-row space-x-4 items-center">
-        {players.map((player) => (
-          <PlayerAvatar
-            me={player.id === dataState?.gameData.owner}
-            key={player.id}
-            name={player.name}
+      {gameStatus === GameStatus.WAITING &&
+        data.status === GameStatus.WAITING &&
+        cards.length === 0 && (
+          <WaitingRoom
+            players={players}
+            ownerId={dataState?.gameData.owner}
+            showStart={dataState?.gameData.owner === dataState?.playerData.id}
+            onAbort={() => dispatch(gameActions.leave())}
+            onStart={() => dispatch(gameActions.start())}
           />
-        ))}
-        {[1, 2, 3, 4].slice(0, -players.length).map((i) => (
-          <PlayerAvatar key={i} />
-        ))}
-      </div>
-      <div className="flex flex-row space-x-4 items-center mt-8">
-        <Button
-          className="bg-slate-500 font-exo hover:bg-slate-700 hover:text-slate-100 text-slate-900 font-bold py-4 px-8"
-          onClick={() => dispatch(gameActions.leave())}
-        >
-          Abort!
-        </Button>
-        {dataState?.gameData.owner === dataState?.playerData.id && (
-          <Button onClick={() => dispatch(gameActions.start())}>
-            Launch the game!
-          </Button>
         )}
-      </div>
+      <GameTable
+        players={players}
+        cardOnTable={cardOnTable}
+        blur={
+          gameStatus === GameStatus.WAITING &&
+          data.status === GameStatus.WAITING &&
+          cards.length === 0
+        }
+        currentPlayer={dataState?.playerData}
+        ownerId={dataState?.gameData.owner}
+        nextPlayer={currentPlayer}
+        cards={cards}
+        onFold={handleFold}
+      />
+      <Toolbar
+        blur={
+          gameStatus === GameStatus.WAITING &&
+          data.status === GameStatus.WAITING &&
+          cards.length === 0
+        }
+        canPass={dataState?.playerData.id === currentPlayer}
+        onLeave={() => setShowAlert(true)}
+        onPass={() => dispatch(gameActions.passToNextPlayer())}
+      />
+      <Alert
+        show={showAlert}
+        onCancel={() => setShowAlert(false)}
+        onConfirm={handleLeave}
+      >
+        <p>Are you sure want to leave the game now?</p>
+      </Alert>
     </div>
   );
 };

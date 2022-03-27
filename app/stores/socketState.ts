@@ -1,8 +1,8 @@
 import { Reducer } from "redux";
 import { Socket } from "socket.io-client";
-import { GameData } from "~/controllers/game";
+import { Card, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
-import { ClientEvent, JoinData } from "../controllers/client";
+import { JoinData } from "../controllers/client";
 import { gameActions, GameActions } from "./gameState";
 import { ThunkAction } from "./index";
 
@@ -70,6 +70,10 @@ export const socketActions = {
         console.log("game created", payload);
         // dispatch game action to set the game data
         gameActions.setGameData(payload)(dispatch, getState);
+        gameActions.setCurrentPlayer(payload.gameData.nextPlayer)(
+          dispatch,
+          getState
+        );
         // add player to the game
         gameActions.addPlayer(payload.playerData)(dispatch, getState);
       });
@@ -91,7 +95,10 @@ export const socketActions = {
         console.log("joined", payload);
         // dispatch game action to set the game data
         gameActions.setGameData(payload)(dispatch, getState);
-
+        gameActions.setCurrentPlayer(payload.gameData.nextPlayer)(
+          dispatch,
+          getState
+        );
         // add player to the game players list
         gameActions.addPlayer(payload.playerData)(dispatch, getState);
       });
@@ -101,6 +108,36 @@ export const socketActions = {
         console.log(payload.name, "has left the game");
         // remove player from the player list
         gameActions.removePlayer(payload.id)(dispatch, getState);
+      });
+
+      // listen for the game start event
+      socket.on("started", (payload: JoinData) => {
+        console.log("game started", payload);
+        // dispatch game action to set the game data
+        gameActions.setGameData(payload)(dispatch, getState);
+        gameActions.setCurrentPlayer(payload.gameData.nextPlayer)(
+          dispatch,
+          getState
+        );
+        gameActions.setGameStatus(GameStatus.STARTED)(dispatch, getState);
+      });
+
+      //listen for cards data event
+      socket.on("cards", (payload: Card[]) => {
+        console.log("cards", payload);
+        gameActions.setCards(payload)(dispatch, getState);
+      });
+
+      // listen for current card on the table
+      socket.on("tableCard", (payload: Card[]) => {
+        console.log("tableCard", payload);
+        gameActions.setTableCard(payload)(dispatch, getState);
+      });
+
+      // listen for the game data event
+      socket.on("nextPlayer", (playerId: string) => {
+        console.log("nextPlayer", playerId);
+        gameActions.setCurrentPlayer(playerId)(dispatch, getState);
       });
     };
   },
@@ -124,20 +161,6 @@ export const socketActions = {
 
       // stop listening for a player left the game event
       socket.off("left");
-    };
-  },
-
-  // socket action to start the game
-  startGame: (
-    onStarted: (data: GameData) => void
-  ): ThunkAction<SocketActions | GameActions> => {
-    return async (dispatch, getState) => {
-      const socket = getState().socket.client;
-      const gameData = getState().game.data;
-      if (!socket) return;
-      // emit the start game event
-      socket.emit("start", gameData);
-      socket.on("started", onStarted);
     };
   },
 };

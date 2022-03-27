@@ -1,40 +1,71 @@
 import { Reducer } from "redux";
 import { JoinData } from "~/controllers/client";
-import { GameData } from "~/controllers/game";
+import { Card, GameData, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
-import { generateName } from "~/utils/helper";
+import { generateName, preloadImage } from "~/utils/helper";
 import { ThunkAction } from "./index";
 import { socketActions, SocketActions } from "./socketState";
 
 export interface GameState {
+  status: GameStatus;
   data: JoinData | null;
   notFound: boolean;
   players: PlayerData[];
+  cards: Card[];
+  tableCard: Card[];
+  currentPlayer: string;
 }
 
 export const initialGameState: GameState = {
   data: null,
   notFound: false,
   players: [],
+  cards: [],
+  status: GameStatus.WAITING,
+  tableCard: [],
+  currentPlayer: "",
 };
 
 interface GameActionTypes {
   readonly SET_GAME_DATA: "SET_GAME_DATA";
   readonly SET_GAME_NOT_FOUND: "SET_GAME_NOT_FOUND";
   readonly SET_PLAYERS: "SET_PLAYERS";
+  readonly SET_GAME_STATUS: "SET_GAME_STATUS";
+  readonly SET_CARDS: "SET_CARDS";
+  readonly SET_TABLE_CARD: "SET_TABLE_CARD";
+  readonly SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER";
 }
 
 const GameActionsTypes: GameActionTypes = {
   SET_GAME_DATA: "SET_GAME_DATA",
   SET_GAME_NOT_FOUND: "SET_GAME_NOT_FOUND",
   SET_PLAYERS: "SET_PLAYERS",
+  SET_GAME_STATUS: "SET_GAME_STATUS",
+  SET_CARDS: "SET_CARDS",
+  SET_TABLE_CARD: "SET_TABLE_CARD",
+  SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER",
 };
 
 interface SetGameData {
   type: "SET_GAME_DATA";
   payload: typeof initialGameState.data;
 }
-
+interface SetCurrentPlayer {
+  type: "SET_CURRENT_PLAYER";
+  payload: typeof initialGameState.currentPlayer;
+}
+interface SetTableCard {
+  type: "SET_TABLE_CARD";
+  payload: typeof initialGameState.tableCard;
+}
+interface SetGameCard {
+  type: "SET_CARDS";
+  payload: typeof initialGameState.cards;
+}
+interface SetGameStatus {
+  type: "SET_GAME_STATUS";
+  payload: typeof initialGameState.status;
+}
 interface SetPlayers {
   type: "SET_PLAYERS";
   payload: typeof initialGameState.players;
@@ -44,9 +75,79 @@ interface SetGameNotFound {
   payload: typeof initialGameState.notFound;
 }
 
-export type GameActions = SetGameData | SetGameNotFound | SetPlayers;
+export type GameActions =
+  | SetGameData
+  | SetGameNotFound
+  | SetPlayers
+  | SetGameCard
+  | SetCurrentPlayer
+  | SetTableCard
+  | SetGameStatus;
 
 export const gameActions = {
+  //game action to set current player
+  setCurrentPlayer: (
+    playerId: string
+  ): ThunkAction<GameActions | SocketActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_CURRENT_PLAYER,
+        payload: playerId,
+      });
+      // update current nextPlayer in gameData
+      const gameData = getState().game.data;
+      if (gameData) {
+        gameData.gameData.nextPlayer = playerId;
+        dispatch({
+          type: GameActionsTypes.SET_GAME_DATA,
+          payload: gameData,
+        });
+      }
+    };
+  },
+
+  // game action to set card on table
+  setTableCard: (
+    cards: typeof initialGameState.tableCard
+  ): ThunkAction<GameActions | SocketActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_TABLE_CARD,
+        payload: cards,
+      });
+    };
+  },
+  passToNextPlayer: (): ThunkAction<GameActions | SocketActions> => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      if (!socket) return;
+      socket.emit("passToNextPlayer", {
+        gameId: getState().game.data?.gameData.id,
+      });
+    };
+  },
+
+  // game action to fold a card to table
+  foldCard: (card: Card): ThunkAction<GameActions | SocketActions> => {
+    return async (dispatch, getState) => {
+      const socket = getState().socket.client;
+      const data = getState().game.data;
+      const currentPlayerTurn = getState().game.currentPlayer;
+      if (!socket || !data) return;
+      //if the turn is not for current player then return
+      if (currentPlayerTurn !== data.playerData.id) {
+        console.log("not your turn", currentPlayerTurn, data.playerData.id);
+        return;
+      }
+
+      socket.emit("foldCard", {
+        card,
+        playerId: data.playerData.id,
+        gameId: data.gameData.id,
+      });
+    };
+  },
+
   // game action to set players in the game
   setPlayers: (
     players: PlayerData[]
@@ -55,6 +156,19 @@ export const gameActions = {
       dispatch({
         type: GameActionsTypes.SET_PLAYERS,
         payload: players,
+      });
+    };
+  },
+
+  // game action to set the game cards
+  setCards: (cards: Card[]): ThunkAction<GameActions | SocketActions> => {
+    return async (dispatch, getState) => {
+      for (const card of cards) {
+        preloadImage(card.image);
+      }
+      dispatch({
+        type: GameActionsTypes.SET_CARDS,
+        payload: cards,
       });
     };
   },
@@ -126,6 +240,7 @@ export const gameActions = {
         id: generateName(),
         level: 1,
         owner: "",
+        nextPlayer: "",
       };
       socket.emit("create", { playerName, gameData });
 
@@ -170,22 +285,26 @@ export const gameActions = {
           type: GameActionsTypes.SET_GAME_DATA,
           payload: joinData,
         });
-        return;
+        // return;
       }
 
-      // if the gameId is different, then prepare new join data
-      joinData = {
-        gameData: {
-          id: gameId,
-          level: 1,
-          owner: "",
-        },
-        playerData: {
-          id: "",
-          name: playerName,
-          socketId: socket.id,
-        },
-      };
+      // if joinData still null, then use initial data
+      if (!joinData) {
+        joinData = {
+          gameData: {
+            id: gameId,
+            level: 1,
+            owner: "",
+            nextPlayer: "",
+          },
+          playerData: {
+            id: "",
+            name: playerName,
+            socketId: socket.id,
+          },
+        };
+      }
+      console.log("sending join data", joinData);
       // send the join request to the server
       socket.emit("join", joinData);
     };
@@ -224,15 +343,24 @@ export const gameActions = {
     };
   },
 
+  // redux action to set game status
+  setGameStatus: (status: GameStatus): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_GAME_STATUS,
+        payload: status,
+      });
+    };
+  },
+
   // redux action to start the game
   start: (): ThunkAction<GameActions | SocketActions> => {
     return async (dispatch, getState) => {
       const socket = getState().socket.client;
       const gameData = getState().game.data;
       if (!socket || !gameData) return;
-      socketActions.startGame((gameData) => {
-        console.log("game started", gameData);
-      })(dispatch, getState);
+      console.log("sending start game request");
+      socket.emit("start", gameData);
     };
   },
 };
@@ -246,6 +374,18 @@ export const GameReducer: Reducer<GameState, GameActions> = (
   }
 
   switch (action.type) {
+    case GameActionsTypes.SET_CURRENT_PLAYER:
+      return {
+        ...state,
+        currentPlayer: action.payload,
+      };
+
+    case GameActionsTypes.SET_TABLE_CARD:
+      return {
+        ...state,
+        tableCard: action.payload,
+      };
+
     case GameActionsTypes.SET_GAME_DATA:
       return {
         ...state,
@@ -260,6 +400,16 @@ export const GameReducer: Reducer<GameState, GameActions> = (
       return {
         ...state,
         players: action.payload,
+      };
+    case GameActionsTypes.SET_GAME_STATUS:
+      return {
+        ...state,
+        status: action.payload,
+      };
+    case GameActionsTypes.SET_CARDS:
+      return {
+        ...state,
+        cards: action.payload,
       };
 
     default:
