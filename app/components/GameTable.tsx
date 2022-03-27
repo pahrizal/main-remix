@@ -16,6 +16,7 @@ type Props = {
   nextPlayer?: string;
   onFold?: (card: CardType) => void;
   avatarColor?: string;
+  hasFreeFold?: boolean;
 };
 const GameTable: React.FC<Props> = ({
   players,
@@ -27,6 +28,7 @@ const GameTable: React.FC<Props> = ({
   cardOnTable = [],
   nextPlayer,
   onFold,
+  hasFreeFold = false,
 }) => {
   return (
     <div
@@ -88,16 +90,34 @@ const GameTable: React.FC<Props> = ({
             <Card card={card} key={card.code} onClick={onFold} />
           ))}
         </div>
-        <div
-          id="table-cards"
-          className={clsx(
-            "flex w-full justify-center items-center flex-row",
-            `-space-x-[3rem]`
-          )}
-        >
-          {cardOnTable.map((card, i) => (
-            <Card card={card} key={card.code} />
-          ))}
+        <div className="flex flex-col w-full">
+          <div
+            id="info-message-container"
+            className="flex w-full justify-center mb-4 items-center flex-row"
+          >
+            {hasFreeFold && (
+              <div
+                id="freefold-info"
+                className="text-white text-center flex-col"
+              >
+                <p className="font-exo text-xl text-lime-500">Awesome!!</p>
+                <p className="text-md text-white">
+                  You can fold any card if no one can't beat your card 😎
+                </p>
+              </div>
+            )}
+          </div>
+          <div
+            id="table-cards"
+            className={clsx(
+              "flex w-full justify-center items-center flex-row",
+              `-space-x-[3rem]`
+            )}
+          >
+            {cardOnTable.map((card, i) => (
+              <Card card={card} key={card.code} />
+            ))}
+          </div>
         </div>
       </div>
     </div>

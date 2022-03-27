@@ -46,6 +46,7 @@ const GameScreen = () => {
   const players = useSelector((state: AppState) => state.game.players);
   const gameStatus = useSelector((state: AppState) => state.game.status);
   const cardOnTable = useSelector((state: AppState) => state.game.tableCard);
+  const hasFreeFold = useSelector((state: AppState) => state.game.hasFreeFold);
   const [showAlert, setShowAlert] = React.useState(false);
   const dispatch = useDispatch();
   const handleLeave = () => {
@@ -121,6 +122,7 @@ const GameScreen = () => {
         ownerId={dataState?.gameData.owner}
         nextPlayer={currentPlayer}
         cards={cards}
+        hasFreeFold={hasFreeFold}
         onFold={handleFold}
       />
       <Toolbar

@@ -22,6 +22,9 @@ export default class PlayerController {
   getSocketId() {
     return this.data.socketId;
   }
+  getName() {
+    return this.data.name;
+  }
   setName(name: string) {
     this.data.name = name;
   }
@@ -42,12 +45,6 @@ export default class PlayerController {
     printLog("info", "PLAYER", "Removing card: ", card);
     const newCards = this.data.cards.filter((c) => c.code !== card.code);
     this.data.cards = newCards;
-    printLog(
-      "info",
-      "PLAYER",
-      "card removed. current cards: ",
-      this.data.cards
-    );
   }
   getCards() {
     return this.data.cards || [];

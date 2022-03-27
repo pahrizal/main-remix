@@ -53,6 +53,8 @@ export default class GameController {
   private players: PlayerController[] = [];
   private deck: Deck;
   private freeFold: boolean;
+  private freeFoldOwner: string;
+
   constructor(data: GameData) {
     this.data = {
       ...data,
@@ -60,15 +62,31 @@ export default class GameController {
       nextPlayer: data.owner,
     };
     this.freeFold = false;
+    this.freeFoldOwner = "";
     // init deck
     this.deck = new Deck();
   }
 
-  setFreeFold(freeFold: boolean) {
-    this.freeFold = freeFold;
+  setFreeFold(state: boolean, owner: string) {
+    this.freeFold = state;
+    this.freeFoldOwner = owner;
+  }
+  setFreeFoldOwner(playerId: string) {
+    this.freeFoldOwner = playerId;
+  }
+  resetFreeFold() {
+    this.freeFold = false;
+    this.freeFoldOwner = "";
   }
   isFreeFold() {
     return this.freeFold;
+  }
+
+  getFreeFoldOwner() {
+    return this.freeFoldOwner;
+  }
+  getFreeFoldPlayer() {
+    return this.players.find((player) => player.getId() === this.freeFoldOwner);
   }
 
   addPlayer(player: PlayerController) {
@@ -134,6 +152,9 @@ export default class GameController {
     this.data.cardOnTable?.push(card);
   }
   async start() {
+    // reset freefold
+    this.resetFreeFold();
+    // shuffle deck
     await this.deck.shuffle();
     const cardPerPlayer = Math.floor(51 / this.players.length);
     // draw card for each player and send to client
@@ -150,11 +171,28 @@ export default class GameController {
   setNextPlayer(playerId: string) {
     this.data.nextPlayer = playerId;
   }
-  getNextPlayer() {
-    //get current player index
+  getCurrentPlayerIndex() {
     const currentPlayerIndex = this.players.findIndex(
       (player) => player.getId() === this.data.nextPlayer
     );
+    return currentPlayerIndex;
+  }
+  getPreviousPlayer() {
+    //get current player index
+    const currentPlayerIndex = this.getCurrentPlayerIndex();
+    // get previous player index
+    let previousPlayerIndex = currentPlayerIndex - 1;
+    if (previousPlayerIndex < 0) {
+      previousPlayerIndex = this.players.length - 1;
+    }
+    // get previous player
+    const previousPlayer = this.players[previousPlayerIndex];
+    return previousPlayer;
+  }
+
+  getNextPlayer() {
+    //get current player index
+    const currentPlayerIndex = this.getCurrentPlayerIndex();
     //get next player index
     let nextPlayerIndex = currentPlayerIndex + 1;
     if (nextPlayerIndex > this.players.length - 1) {

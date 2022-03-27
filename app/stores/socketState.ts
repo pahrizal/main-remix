@@ -131,6 +131,10 @@ export const socketActions = {
       socket.on("nextPlayer", (playerId: string) => {
         gameActions.setCurrentPlayer(playerId)(dispatch, getState);
       });
+      // listen for freeFold event
+      socket.on("freeFold", (state: boolean) => {
+        gameActions.setHasFreeFold(state)(dispatch, getState);
+      });
     };
   },
 
