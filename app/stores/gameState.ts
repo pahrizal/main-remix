@@ -136,7 +136,6 @@ export const gameActions = {
       if (!socket || !data) return;
       //if the turn is not for current player then return
       if (currentPlayerTurn !== data.playerData.id) {
-        console.log("not your turn", currentPlayerTurn, data.playerData.id);
         return;
       }
 
@@ -186,7 +185,6 @@ export const gameActions = {
         type: GameActionsTypes.SET_PLAYERS,
         payload: [...players, player],
       });
-      console.log("player added", player);
     };
   },
 
@@ -304,7 +302,6 @@ export const gameActions = {
           },
         };
       }
-      console.log("sending join data", joinData);
       // send the join request to the server
       socket.emit("join", joinData);
     };
@@ -359,7 +356,6 @@ export const gameActions = {
       const socket = getState().socket.client;
       const gameData = getState().game.data;
       if (!socket || !gameData) return;
-      console.log("sending start game request");
       socket.emit("start", gameData);
     };
   },

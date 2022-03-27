@@ -52,7 +52,6 @@ const GameScreen = () => {
     dispatch(gameActions.leave());
   };
   const handleFold = (card: Card) => {
-    console.log("Fold", card);
     dispatch(gameActions.foldCard(card));
   };
   // use effect to detect if the game is not found

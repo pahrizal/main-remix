@@ -53,7 +53,6 @@ export default function Index() {
 
   React.useEffect(() => {
     if (!data) return;
-    console.log(data);
     nav(data.gameData.id);
   }, [data]);
 
