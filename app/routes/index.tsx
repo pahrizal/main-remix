@@ -19,12 +19,10 @@ export default function Index() {
   const nav = useNavigate();
   const handleRoomInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    if (!value) return;
     setJoinId(value);
   };
   const handleNameInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    if (!value) return;
     setPlayerName(value);
   };
   const handleJoin = () => {
