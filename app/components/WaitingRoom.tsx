@@ -1,6 +1,6 @@
 import React from "react";
 import { PlayerData } from "~/controllers/player";
-import Button from "~/components/button";
+import Button from "~/components/Button";
 import PlayerAvatar from "~/components/playerAvatar";
 
 type Props = {

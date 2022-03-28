@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import React from "react";
-import Button from "~/components/button"
+import Button from "~/components/Button"
 
 type Props = {
   show?: boolean;
