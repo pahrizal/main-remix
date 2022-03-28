@@ -84,7 +84,7 @@ const GameTable: React.FC<Props> = ({
           className={clsx(
             "absolute bottom-0 card-deck flex w-full justify-center items-center flex-row",
             {
-              "-space-x-[4.8rem]": cards.length > 25,
+              "-space-x-[4.2rem]": cards.length > 25,
               "-space-x-[3.6rem]": cards.length > 5 && cards.length <= 25,
               "-space-x-[2.4rem]": cards.length <= 5,
             }
@@ -117,7 +117,7 @@ const GameTable: React.FC<Props> = ({
             className={clsx(
               "flex w-full justify-center items-center flex-row",
               {
-                "-space-x-[4.8rem]": cardOnTable.length > 25,
+                "-space-x-[4.2rem]": cardOnTable.length > 25,
                 "-space-x-[3.6rem]":
                   cardOnTable.length > 5 && cardOnTable.length <= 25,
                 "-space-x-[2.4rem]": cardOnTable.length <= 5,

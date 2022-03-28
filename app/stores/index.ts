@@ -1,5 +1,9 @@
 import { GameReducer, GameState, initialGameState } from "~/stores/gameState";
-import { initialSocketState, SocketReducer, SocketState } from "~/stores/socketState";
+import {
+  initialSocketState,
+  SocketReducer,
+  SocketState,
+} from "~/stores/socketState";
 
 export interface AppState {
   socket: SocketState;

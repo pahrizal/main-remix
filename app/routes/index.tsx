@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import Button from "~/components/Button";
 import playingCardBackground from "~/assets/images/playing-cards.png";
 import RubberText from "~/components/RubberText";
-import { AppState } from "~/stores";
+import { AppState } from "~/stores/main.client";
 import { gameActions } from "~/stores/gameState";
 
 export default function Index() {

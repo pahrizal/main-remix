@@ -1,13 +1,12 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { json, LoaderFunction, useLoaderData, useNavigate } from "remix";
+import { json, LoaderFunction, useLoaderData } from "remix";
 import Alert from "~/components/Alert";
 import GameTable from "~/components/GameTable";
 import Toolbar from "~/components/Toolbar";
 import WaitingRoom from "~/components/WaitingRoom";
 import { JoinData } from "~/controllers/client";
 import { Card, GameData, games, GameStatus } from "~/controllers/game";
-import { PlayerData } from "~/controllers/player";
 import { AppState } from "~/stores";
 import { gameActions } from "~/stores/gameState";
 

@@ -17,6 +17,8 @@ import tailwindStyles from "~/assets/styles/tailwind.css";
 import { AppState, initialAppState } from "~/stores";
 import configureStore from "~/stores/config";
 import { socketActions } from "~/stores/socketState";
+import { NotificationController } from "./controllers/notification.client";
+import { gameActions } from "./stores/gameState";
 
 export const links: LinksFunction = () => {
   return [
@@ -57,6 +59,8 @@ function App() {
         (data) => {}
       )
     );
+    const notif = new NotificationController();
+    dispatch(gameActions.setNotif(notif));
   }, []);
   return (
     <html
