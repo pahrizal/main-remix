@@ -1,53 +1,38 @@
-# Welcome to Remix!
+# Welcome to main-remix!
 
-- [Remix Docs](https://remix.run/docs)
+a web based playing card game powered by this awesome things:
+- [React](https://reactjs.org/) 
+- [Typescript](https://www.typescriptlang.org/)
+- [RemixJs](https://remix.run)
+- [Tailwind CSS](https://tailwindcss.com/) 
+- [Express](https://expressjs.com/)
+- [SocketIO](https://socket.io/)
+- [Deck of Cards](https://deckofcardsapi.com/)
+- [Heroku](https://www.heroku.com/)
+- [Docker](https://www.docker.com/)
+- [Github Action - Heroku Deploy](https://github.com/AkhileshNS/heroku-deploy)
 
-## Development
+## Game Rule
+- the game will be limited to max 4 players
+- the game will be using 52 cards and each player will get random `(52 - 1) / players.length` cards, with 1 folded card to the table
+- the first turn will be the game owner
+- the player can fold a card when the last folded card on table is smaller than player card and must be the same suit.
+- you can't play alone 😁, you need a friends to play with, not a bot!, 
 
-You'll need to run two terminals (or bring in a process manager like concurrently/pm2-dev if you like):
+## How to Start a new game
+- Go to [main-remix website](https://main-remix.herokuapp.com)
+- Enter your name and then click **Create a new game** button
+- then share the game URL to your friends
 
-Start the Remix development asset server
+## How to join a game
+- Go to [main-remix website](https://main-remix.herokuapp.com)
+- Enter your name and the game ID shared by your friend
+- then click the **JOIN** button
+- or if your friend shared the game link, just open it! 😁
+- if the game has started, you can't jump in to the chair and play
 
-```sh
-npm run dev
-```
+## How to PLAY!
+just click your card that you want to fold to the table or press **PASS** button if you can not beat your friend cards 😁
 
-This starts your app in development mode, which will purge the server require cache when Remix rebuilds assets so you don't need a process manager restarting the express server.
-
-## Deployment
-
-First, build your app for production:
-
-```sh
-npm run build
-```
-
-Then run the app in production mode:
-
-```sh
-npm start
-```
-
-Now you'll need to pick a host to deploy it to.
-
-### DIY
-
-If you're familiar with deploying express applications you should be right at home just make sure to deploy the output of `remix build`
-
-- `server/build/`
-- `public/build/`
-
-### Using a Template
-
-When you ran `npx create-remix@latest` there were a few choices for hosting. You can run that again to create a new project, then copy over your `app/` folder to the new project that's pre-configured for your target server.
-
-```sh
-cd ..
-# create a new project, and pick a pre-configured host
-npx create-remix@latest
-cd my-new-remix-app
-# remove the new project's app (not the old one!)
-rm -rf app
-# copy your app over
-cp -R ../my-old-remix-app/app app
-```
+# How to Contribute
+I am really appreciate any kind of contributions for this project. even a small things, Please do!
