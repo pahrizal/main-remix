@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "remix";
 import { v4 as uuidv4 } from "uuid";
 import Button from "~/components/Button";
-import playingCardBackground from "../assets/images/playing-cards.png";
+import playingCardBackground from "~/assets/images/playing-cards.png";
 import RubberText from "~/components/RubberText";
 import { AppState } from "~/stores";
 import { gameActions } from "~/stores/gameState";
