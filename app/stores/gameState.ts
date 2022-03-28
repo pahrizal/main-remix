@@ -3,8 +3,12 @@ import { JoinData } from "~/controllers/client";
 import { Card, GameData, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import { generateName, preloadImage } from "~/utils/helper";
-import { ThunkAction } from "~/stores/index";
+import { ThunkAction } from "~/stores";
 import { socketActions, SocketActions } from "~/stores/socketState";
+import {
+  NotificationController,
+  Sound,
+} from "~/controllers/notification.client";
 
 export interface GameState {
   status: GameStatus;
@@ -15,6 +19,7 @@ export interface GameState {
   tableCard: Card[];
   currentPlayer: string;
   hasFreeFold: boolean;
+  notif: NotificationController | null;
 }
 
 export const initialGameState: GameState = {
@@ -26,6 +31,7 @@ export const initialGameState: GameState = {
   tableCard: [],
   currentPlayer: "",
   hasFreeFold: false,
+  notif: null,
 };
 
 interface GameActionTypes {
@@ -37,6 +43,7 @@ interface GameActionTypes {
   readonly SET_TABLE_CARD: "SET_TABLE_CARD";
   readonly SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER";
   readonly SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD";
+  readonly SET_NOTIF: "SET_NOTIF";
 }
 
 const GameActionsTypes: GameActionTypes = {
@@ -48,6 +55,7 @@ const GameActionsTypes: GameActionTypes = {
   SET_TABLE_CARD: "SET_TABLE_CARD",
   SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER",
   SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD",
+  SET_NOTIF: "SET_NOTIF",
 };
 
 interface SetGameData {
@@ -84,6 +92,11 @@ interface SetHasFreeFold {
   payload: typeof initialGameState.hasFreeFold;
 }
 
+interface SetNotif {
+  type: "SET_NOTIF";
+  payload: typeof initialGameState.notif;
+}
+
 export type GameActions =
   | SetGameData
   | SetGameNotFound
@@ -92,7 +105,8 @@ export type GameActions =
   | SetCurrentPlayer
   | SetTableCard
   | SetGameStatus
-  | SetHasFreeFold;
+  | SetHasFreeFold
+  | SetNotif;
 
 export const gameActions = {
   //game action to set current player
@@ -100,6 +114,7 @@ export const gameActions = {
     playerId: string
   ): ThunkAction<GameActions | SocketActions> => {
     return async (dispatch, getState) => {
+      const notif = getState().game.notif;
       dispatch({
         type: GameActionsTypes.SET_CURRENT_PLAYER,
         payload: playerId,
@@ -107,6 +122,9 @@ export const gameActions = {
       // update current nextPlayer in gameData
       const gameData = getState().game.data;
       if (gameData) {
+        if (gameData.playerData.id === playerId && notif) {
+          notif.play(Sound.turn);
+        }
         gameData.gameData.nextPlayer = playerId;
         dispatch({
           type: GameActionsTypes.SET_GAME_DATA,
@@ -161,7 +179,6 @@ export const gameActions = {
       if (currentPlayerTurn !== data.playerData.id) {
         return;
       }
-
       socket.emit("foldCard", {
         card,
         playerId: data.playerData.id,
@@ -175,6 +192,9 @@ export const gameActions = {
     players: PlayerData[]
   ): ThunkAction<GameActions | SocketActions> => {
     return async (dispatch, getState) => {
+      const notif = getState().game.notif;
+      // play notification
+      notif && notif.play("join");
       dispatch({
         type: GameActionsTypes.SET_PLAYERS,
         payload: players,
@@ -218,9 +238,10 @@ export const gameActions = {
     return async (dispatch, getState) => {
       // check if player already exist
       const players = getState().game.players;
+      const notif = getState().game.notif;
       const playerExist = players.find((p) => p.id === playerId);
       if (!playerExist) return;
-
+      notif && notif.play("leave");
       // remove player from the player list
       dispatch({
         type: GameActionsTypes.SET_PLAYERS,
@@ -382,6 +403,22 @@ export const gameActions = {
       socket.emit("start", gameData);
     };
   },
+  setNotif: (payload: NotificationController): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_NOTIF,
+        payload,
+      });
+    };
+  },
+  playSound(
+    sound: keyof typeof Sound
+  ): ThunkAction<GameActions | SocketActions> {
+    return async (dispatch, getState) => {
+      const notif = getState().game.notif;
+      notif && notif.play(sound);
+    };
+  },
 };
 
 export const GameReducer: Reducer<GameState, GameActions> = (
@@ -435,7 +472,11 @@ export const GameReducer: Reducer<GameState, GameActions> = (
         ...state,
         hasFreeFold: action.payload,
       };
-
+    case GameActionsTypes.SET_NOTIF:
+      return {
+        ...state,
+        notif: action.payload,
+      };
     default:
       return state;
   }

@@ -4,7 +4,8 @@ import { Card, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import { JoinData } from "~/controllers/client";
 import { gameActions, GameActions } from "~/stores/gameState";
-import { ThunkAction } from "~/stores/index";
+import { ThunkAction } from "~/stores";
+import { Sound } from "~/controllers/notification.client";
 
 export interface SocketState {
   client: Socket | null;
@@ -88,7 +89,7 @@ export const socketActions = {
         gameActions.setGameNotFound(true)(dispatch, getState);
       });
 
-      // listen to the response from the server
+      // listen for successfull join event
       socket.on("joined", (payload: JoinData) => {
         // dispatch game action to set the game data
         gameActions.setGameData(payload)(dispatch, getState);
@@ -109,6 +110,8 @@ export const socketActions = {
       // listen for the game start event
       socket.on("started", (payload: JoinData) => {
         // dispatch game action to set the game data
+        gameActions.playSound(Sound.shuffle)(dispatch, getState);
+
         gameActions.setGameData(payload)(dispatch, getState);
         gameActions.setCurrentPlayer(payload.gameData.nextPlayer)(
           dispatch,
@@ -124,6 +127,7 @@ export const socketActions = {
 
       // listen for current card on the table
       socket.on("tableCard", (payload: Card[]) => {
+        gameActions.playSound(Sound.draw)(dispatch, getState);
         gameActions.setTableCard(payload)(dispatch, getState);
       });
 
