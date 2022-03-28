@@ -109,9 +109,12 @@ const GameTable: React.FC<Props> = ({
           </div>
           <div
             id="table-cards"
+            style={{
+
+            }}
             className={clsx(
               "flex w-full justify-center items-center flex-row",
-              `-space-x-[3rem]`
+              `-space-x-[4.8rem]`
             )}
           >
             {cardOnTable.map((card, i) => (
