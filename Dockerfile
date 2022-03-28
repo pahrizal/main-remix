@@ -1,5 +1,5 @@
 FROM node:17
-WORKDIR /app
+WORKDIR /web
 COPY ./app/ ./app/
 COPY ./public/ ./public/
 COPY package.json .
