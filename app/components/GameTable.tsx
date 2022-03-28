@@ -2,8 +2,8 @@ import clsx from "clsx";
 import React from "react";
 import { Card as CardType } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
-import Card from "./Card";
-import PlayerAvatar from "./PlayerAvatar";
+import Card from "~/components/Card";
+import PlayerAvatar from "~/components/PlayerAvatar";
 
 type Props = {
   players: PlayerData[];

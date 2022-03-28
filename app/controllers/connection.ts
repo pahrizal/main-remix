@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
-import ClientController from "./client";
-import { printLog } from "../utils/helper";
+import ClientController from "~/controllers/client";
+import { printLog } from "~/utils/helper";
 
 export const clients: ClientController[] = [];
 

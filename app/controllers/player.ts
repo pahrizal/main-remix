@@ -1,5 +1,5 @@
 import { printLog, randomColor } from "~/utils/helper";
-import { Card } from "./game";
+import { Card } from "~/controllers/game";
 
 export interface PlayerData {
   id: string;
