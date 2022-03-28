@@ -1,8 +1,8 @@
 import { Server, Socket } from "socket.io";
-import { generateName, printLog } from "../utils/helper";
-import { clients } from "./connection";
-import GameController, { Card, GameData, games } from "./game";
-import PlayerController, { PlayerData } from "./player";
+import { generateName, printLog } from "~/utils/helper";
+import { clients } from "~/controllers/connection";
+import GameController, { Card, GameData, games } from "~/controllers/game";
+import PlayerController, { PlayerData } from "~/controllers/player";
 import { v4 as uuidv4 } from "uuid";
 
 export type ClientEvent = "join" | "joined" | "leave" | "left";

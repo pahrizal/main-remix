@@ -1,8 +1,8 @@
 import { Socket } from "socket.io";
 import { v4 as uuidv4 } from "uuid";
 import { printLog } from "~/utils/helper";
-import { Deck } from "./deck";
-import PlayerController from "./player";
+import { Deck } from "~/controllers/deck";
+import PlayerController from "~/controllers/player";
 /**
  * This constant is used to store the game created by the client
  * @constant {GameController[]}

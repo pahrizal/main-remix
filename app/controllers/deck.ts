@@ -1,5 +1,5 @@
 import { printLog } from "~/utils/helper";
-import { Card } from "./game";
+import { Card } from "~/controllers/game";
 
 export const convertedCardValue: { [key: string]: number } = {
   "2": 2,

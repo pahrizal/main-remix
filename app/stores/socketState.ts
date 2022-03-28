@@ -2,9 +2,9 @@ import { Reducer } from "redux";
 import { Socket } from "socket.io-client";
 import { Card, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
-import { JoinData } from "../controllers/client";
-import { gameActions, GameActions } from "./gameState";
-import { ThunkAction } from "./index";
+import { JoinData } from "~/controllers/client";
+import { gameActions, GameActions } from "~/stores/gameState";
+import { ThunkAction } from "~/stores/index";
 
 export interface SocketState {
   client: Socket | null;

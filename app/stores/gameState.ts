@@ -3,8 +3,8 @@ import { JoinData } from "~/controllers/client";
 import { Card, GameData, GameStatus } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import { generateName, preloadImage } from "~/utils/helper";
-import { ThunkAction } from "./index";
-import { socketActions, SocketActions } from "./socketState";
+import { ThunkAction } from "~/stores/index";
+import { socketActions, SocketActions } from "~/stores/socketState";
 
 export interface GameState {
   status: GameStatus;

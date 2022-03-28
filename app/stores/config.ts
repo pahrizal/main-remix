@@ -1,6 +1,6 @@
 import { applyMiddleware, combineReducers, createStore } from "redux";
 import thunk from "redux-thunk";
-import { AppState, reducers } from "./index";
+import { AppState, reducers } from "~/stores/index";
 
 const bindMiddleware = (middleware: any) => {
   if (process.env.NODE_ENV !== "production") {
