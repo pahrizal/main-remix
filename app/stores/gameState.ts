@@ -9,7 +9,9 @@ import {
   NotificationController,
   Sound,
 } from "~/controllers/notification.client";
+import Peer from "simple-peer";
 
+export type RemotePeer = { id: string; peer: Peer.Instance };
 export interface GameState {
   status: GameStatus;
   data: JoinData | null;
@@ -20,6 +22,10 @@ export interface GameState {
   currentPlayer: string;
   hasFreeFold: boolean;
   notif: NotificationController | null;
+  videoDeviceId: string;
+  audioDeviceId: string;
+  localPeer: Peer.Instance | null;
+  remotePeers: RemotePeer[];
 }
 
 export const initialGameState: GameState = {
@@ -32,6 +38,10 @@ export const initialGameState: GameState = {
   currentPlayer: "",
   hasFreeFold: false,
   notif: null,
+  videoDeviceId: "",
+  audioDeviceId: "",
+  localPeer: null,
+  remotePeers: [],
 };
 
 interface GameActionTypes {
@@ -44,6 +54,10 @@ interface GameActionTypes {
   readonly SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER";
   readonly SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD";
   readonly SET_NOTIF: "SET_NOTIF";
+  readonly SET_VIDEO_DEVICE_ID: "SET_VIDEO_DEVICE_ID";
+  readonly SET_AUDIO_DEVICE_ID: "SET_AUDIO_DEVICE_ID";
+  readonly SET_LOCAL_PEER: "SET_LOCAL_PEER";
+  readonly SET_REMOTE_PEER: "SET_REMOTE_PEER";
 }
 
 const GameActionsTypes: GameActionTypes = {
@@ -56,6 +70,10 @@ const GameActionsTypes: GameActionTypes = {
   SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER",
   SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD",
   SET_NOTIF: "SET_NOTIF",
+  SET_VIDEO_DEVICE_ID: "SET_VIDEO_DEVICE_ID",
+  SET_AUDIO_DEVICE_ID: "SET_AUDIO_DEVICE_ID",
+  SET_LOCAL_PEER: "SET_LOCAL_PEER",
+  SET_REMOTE_PEER: "SET_REMOTE_PEER",
 };
 
 interface SetGameData {
@@ -97,6 +115,26 @@ interface SetNotif {
   payload: typeof initialGameState.notif;
 }
 
+interface SetVideoDeviceId {
+  type: "SET_VIDEO_DEVICE_ID";
+  payload: typeof initialGameState.videoDeviceId;
+}
+
+interface SetAudioDeviceId {
+  type: "SET_AUDIO_DEVICE_ID";
+  payload: typeof initialGameState.audioDeviceId;
+}
+
+interface SetLocalPeer {
+  type: "SET_LOCAL_PEER";
+  payload: typeof initialGameState.localPeer;
+}
+
+interface SetRemotePeer {
+  type: "SET_REMOTE_PEER";
+  payload: typeof initialGameState.remotePeers;
+}
+
 export type GameActions =
   | SetGameData
   | SetGameNotFound
@@ -106,7 +144,11 @@ export type GameActions =
   | SetTableCard
   | SetGameStatus
   | SetHasFreeFold
-  | SetNotif;
+  | SetNotif
+  | SetVideoDeviceId
+  | SetAudioDeviceId
+  | SetLocalPeer
+  | SetRemotePeer;
 
 export const gameActions = {
   //game action to set current player
@@ -265,10 +307,47 @@ export const gameActions = {
   // redux action to set game data
   setGameData: (data: JoinData): ThunkAction<GameActions> => {
     return async (dispatch, getState) => {
-      localStorage.setItem(data.gameData.id, JSON.stringify(data));
+      try {
+        localStorage.setItem(data.gameData.id, JSON.stringify(data));
+        dispatch({
+          type: GameActionsTypes.SET_GAME_DATA,
+          payload: data,
+        });
+      } catch (error) {}
+    };
+  },
+
+  // redux action to set local peer
+  setLocalPeer: (
+    peer: typeof initialGameState.localPeer
+  ): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
       dispatch({
-        type: GameActionsTypes.SET_GAME_DATA,
-        payload: data,
+        type: GameActionsTypes.SET_LOCAL_PEER,
+        payload: peer,
+      });
+    };
+  },
+
+  setRemotePeers: (
+    peers: typeof initialGameState.remotePeers
+  ): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_REMOTE_PEER,
+        payload: peers,
+      });
+    };
+  },
+  addRemotePeer: (peer: RemotePeer): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
+      const peers = getState().game.remotePeers;
+      const peerIndex = peers.indexOf(peer);
+      if (peerIndex > -1) return;
+
+      dispatch({
+        type: GameActionsTypes.SET_REMOTE_PEER,
+        payload: [...peers, peer],
       });
     };
   },
@@ -278,12 +357,24 @@ export const gameActions = {
     return async (dispatch, getState) => {
       const socket = getState().socket.client;
       if (!socket) return;
+
+      //prepare RTC Connection
+      //   const peer = new Peer({ initiator: true });
+      //   peer.on("signal", (data) => {
+      //     console.log("peer got signal", data);
+      //   });
+      //   dispatch({
+      //     type: GameActionsTypes.SET_LOCAL_PEER,
+      //     payload: peer,
+      //   });
+
       const gameData: GameData = {
         id: generateName(),
         level: 1,
         owner: "",
         nextPlayer: "",
       };
+
       socket.emit("create", { playerName, gameData });
 
       // when game created, start listening all game events
@@ -343,6 +434,10 @@ export const gameActions = {
             id: "",
             name: playerName,
             socketId: socket.id,
+            playTurn: false,
+            colors: "",
+            cards: [],
+            iceCandidate: null,
           },
         };
       }
@@ -419,6 +514,41 @@ export const gameActions = {
       notif && notif.play(sound);
     };
   },
+  setVideoDeviceId: (
+    id: typeof initialGameState.videoDeviceId
+  ): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_VIDEO_DEVICE_ID,
+        payload: id,
+      });
+    };
+  },
+  setAudioDeviceId: (
+    id: typeof initialGameState.audioDeviceId
+  ): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_AUDIO_DEVICE_ID,
+        payload: id,
+      });
+    };
+  },
+  setDeviceIds: (
+    videoDeviceId: string,
+    audioDeviceId: string
+  ): ThunkAction<GameActions> => {
+    return async (dispatch, getState) => {
+      dispatch({
+        type: GameActionsTypes.SET_VIDEO_DEVICE_ID,
+        payload: videoDeviceId,
+      });
+      dispatch({
+        type: GameActionsTypes.SET_AUDIO_DEVICE_ID,
+        payload: audioDeviceId,
+      });
+    };
+  },
 };
 
 export const GameReducer: Reducer<GameState, GameActions> = (
@@ -476,6 +606,21 @@ export const GameReducer: Reducer<GameState, GameActions> = (
       return {
         ...state,
         notif: action.payload,
+      };
+    case GameActionsTypes.SET_VIDEO_DEVICE_ID:
+      return {
+        ...state,
+        videoDeviceId: action.payload,
+      };
+    case GameActionsTypes.SET_AUDIO_DEVICE_ID:
+      return {
+        ...state,
+        audioDeviceId: action.payload,
+      };
+    case GameActionsTypes.SET_LOCAL_PEER:
+      return {
+        ...state,
+        localPeer: action.payload,
       };
     default:
       return state;

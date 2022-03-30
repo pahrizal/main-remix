@@ -4,6 +4,8 @@ import { Card as CardType } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import Card from "~/components/Card";
 import PlayerAvatar from "~/components/PlayerAvatar";
+import { randomInt } from "crypto";
+import { getRandomInt } from "~/utils/helper";
 
 type Props = {
   players: PlayerData[];
@@ -46,39 +48,28 @@ const GameTable: React.FC<Props> = ({
             "-bottom-[64px]"
           )}
         >
-          <PlayerAvatar
-            name={currentPlayer?.name}
-            me={true}
-            playTurn={
-              nextPlayer !== undefined &&
-              currentPlayer &&
-              currentPlayer.id === nextPlayer
-            }
-            color="#29AEEF"
-          />
+          {!blur && currentPlayer && (
+            <PlayerAvatar {...currentPlayer} me={true} />
+          )}
         </div>
-        {players
-          .filter((p) => p.id !== currentPlayer?.id)
-          .map((player, index) => (
-            <div
-              key={index}
-              className={clsx(
-                "absolute  shadow-[0px_0px_10px_#000] w-[128px] h-[128px] border-[8px] rounded-full bg-slate-700 border-slate-900 flex flex-col justify-center items-center",
-                {
-                  "-left-[77px]": index === 0,
-                  "-right-[77px]": index === 1,
-                  "-top-[77px]": index === 2,
-                }
-              )}
-            >
-              <PlayerAvatar
-                name={player.name}
-                me={false}
-                color={player.colors}
-                playTurn={player.id === nextPlayer}
-              />
-            </div>
-          ))}
+        {!blur &&
+          players
+            .filter((p) => p.id !== currentPlayer?.id)
+            .map((player, index) => (
+              <div
+                key={index}
+                className={clsx(
+                  "absolute  shadow-[0px_0px_10px_#000] w-[128px] h-[128px] border-[8px] rounded-full bg-slate-700 border-slate-900 flex flex-col justify-center items-center",
+                  {
+                    "-left-[77px]": index === 0,
+                    "-right-[77px]": index === 1,
+                    "-top-[77px]": index === 2,
+                  }
+                )}
+              >
+                <PlayerAvatar {...player} me={false} />
+              </div>
+            ))}
         <div
           id="player-cards"
           className={clsx(

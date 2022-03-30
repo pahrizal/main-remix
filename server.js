@@ -24,6 +24,8 @@ const io = new Server(server, {
 const socketConn = new ConnectionController(io);
 socketConn.start();
 
+// setup simple peer server
+
 app.use(compression());
 
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header

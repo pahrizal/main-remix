@@ -16,21 +16,49 @@ export const loader: LoaderFunction = async ({ params }) => {
 
   // if game is not found, set gameExist to false
   if (!game) {
-    return json({ ...params, players: [], status: GameStatus.UNDEFINED });
+    const data: LoaderData = {
+      status: GameStatus.UNDEFINED,
+      gameData: {
+        id: params.id || "",
+        owner: "",
+        level: 1,
+        playerCount: 0,
+        nextPlayer: "",
+        cardOnTable: [],
+      },
+      playerData: {
+        id: "",
+        name: "",
+        cards: [],
+        colors: "",
+        iceCandidate: null,
+        playTurn: false,
+        socketId: "",
+      },
+      players: [],
+    };
+    return json(data);
   }
 
   // if game is found and game is still in waiting state, return game data
   return json({
-    ...game.getData(),
     players: game.getPlayers().map((p) => p.getId()),
     status: game.getStatus(),
-    ...params,
+    gameData: game.getData(),
+    playerData: {
+      id: "",
+      name: "",
+      cards: [],
+      colors: "",
+      iceCandidate: null,
+      playTurn: false,
+      socketId: "",
+    },
   });
 };
 
-interface LoaderData extends GameData {
+interface LoaderData extends JoinData {
   status: GameStatus;
-  id: string;
   players: string[];
 }
 
@@ -64,40 +92,36 @@ const GameScreen = () => {
   }, [data]);
 
   React.useEffect(() => {
-    if (data && data.id && socket) {
+    if (data && data.gameData.id && socket) {
       let playerName = "Anonymous";
       // get local storage data
-      const localData = localStorage.getItem(data.id);
+      const localData = localStorage.getItem(data.gameData.id);
       if (localData) {
         // if local data is found, get player name there and join the game
         const localDataObj: JoinData = JSON.parse(localData) as JoinData;
         playerName = localDataObj.playerData.name || "Anonymous";
         if (data.players.includes(localDataObj.playerData.id)) {
-          dispatch(gameActions.join(data.id, playerName));
+          dispatch(gameActions.join(data.gameData.id, playerName));
         } else {
           dispatch(gameActions.start());
         }
       } else {
         // if local data is not found, create a new player and join the game if the game is not full or still in waiting state
-        if (
-          data.status === GameStatus.WAITING &&
-          data.playerCount &&
-          data.playerCount < 4
-        ) {
+        if (data.status === GameStatus.WAITING && data.players.length < 4) {
           const newPlayerName = prompt("Enter your name", "Anonymous");
           if (newPlayerName) {
             playerName = newPlayerName;
           }
-          dispatch(gameActions.join(data.id, playerName));
+          dispatch(gameActions.join(data.gameData.id, playerName));
         } else {
           window.location.href = "/";
         }
       }
     }
   }, [data, dispatch, socket]);
-
+  console.log(players);
   return (
-    <div className="w-screen h-screen flex flex-col justify-center items-center">
+    <div className="relative w-screen h-screen flex flex-col justify-center items-center">
       {gameStatus === GameStatus.WAITING &&
         data.status === GameStatus.WAITING &&
         cards.length === 0 && (

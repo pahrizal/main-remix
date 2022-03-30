@@ -1,11 +1,35 @@
 import { Server, Socket } from "socket.io";
-import { generateName, printLog } from "~/utils/helper";
+import { generateName, printLog, randomColor } from "~/utils/helper";
 import { clients } from "~/controllers/connection";
 import GameController, { Card, GameData, games } from "~/controllers/game";
 import PlayerController, { PlayerData } from "~/controllers/player";
 import { v4 as uuidv4 } from "uuid";
 
-export type ClientEvent = "join" | "joined" | "leave" | "left";
+export enum ClientEvent {
+  join = "join",
+  joined = "joined",
+  leave = "leave",
+  left = "left",
+  created = "created",
+  players = "players",
+  notFound = "notFound",
+  started = "started",
+  cards = "cards",
+  tableCard = "tableCard",
+  nextPlayer = "nextPlayer",
+  freeFold = "freeFold",
+  newPlayer = "newPlayer",
+  iceCandidate = "iceCandidate",
+  disconnect = "disconnect",
+  create = "create",
+  start = "start",
+  foldCard = "foldCard",
+  passToNextPlayer = "passToNextPlayer",
+  stream = "stream",
+  playerData = "playerData",
+  RTCOffer = "RTCOffer",
+  RTCAnswer = "RTCAnswer",
+}
 export interface JoinData {
   gameData: GameData;
   playerData: PlayerData;
@@ -32,13 +56,17 @@ export default class ClientController {
   constructor(socket: Socket, io: Server) {
     this.socket = socket;
     this.server = io;
-    socket.on("disconnect", this.disconnect.bind(this));
-    socket.on("create", this.create.bind(this));
-    socket.on("join", this.join.bind(this));
-    socket.on("leave", this.leave.bind(this));
-    socket.on("start", this.start.bind(this));
-    socket.on("foldCard", this.foldCard.bind(this));
-    socket.on("passToNextPlayer", this.passToNextPlayer.bind(this));
+    socket.on(ClientEvent.disconnect, this.disconnect.bind(this));
+    socket.on(ClientEvent.create, this.create.bind(this));
+    socket.on(ClientEvent.join, this.join.bind(this));
+    socket.on(ClientEvent.leave, this.leave.bind(this));
+    socket.on(ClientEvent.start, this.start.bind(this));
+    socket.on(ClientEvent.foldCard, this.foldCard.bind(this));
+    socket.on(ClientEvent.passToNextPlayer, this.passToNextPlayer.bind(this));
+    socket.on(ClientEvent.stream, this.onStream.bind(this));
+    socket.on(ClientEvent.iceCandidate, this.onIceCandidate.bind(this));
+    socket.on(ClientEvent.RTCOffer, this.onRTCOffer.bind(this));
+    socket.on(ClientEvent.RTCAnswer, this.onRTCAnswer.bind(this));
   }
   /**
    * This method is used to disconnect the socket connection
@@ -66,6 +94,9 @@ export default class ClientController {
       name: data.playerName || "Owner",
       socketId: this.socket.id,
       cards: [],
+      playTurn: false,
+      colors: randomColor(),
+      iceCandidate: null,
     };
     // define new gameData
     const newGameData: GameData = { ...data.gameData, owner: ownerData.id };
@@ -107,6 +138,9 @@ export default class ClientController {
       name: data.playerData.name || generateName(1),
       socketId: this.socket.id,
       cards: data.playerData.cards || [],
+      playTurn: false,
+      colors: randomColor(),
+      iceCandidate: null,
     });
     // check if the game is already created
     let game = games.find((game) => game.getId() === data.gameData.id);
@@ -296,6 +330,14 @@ export default class ClientController {
         this.socket.emit("cards", currentCard);
 
         const nextPlayer = game.getNextPlayer();
+        // send updated list of players to all players in the game
+        const players = game.getPlayers();
+        const playerData = players.map((player) => {
+          player.setTurn(player.getId() === nextPlayer.getId());
+          return player.getData({ includeCards: false });
+        });
+        //send the data to the client
+        this.server.in(game.getId()).emit(ClientEvent.players, playerData);
 
         this.server.in(game.getId()).emit("nextPlayer", nextPlayer.getId());
 
@@ -363,5 +405,103 @@ export default class ClientController {
     // send the current card on table all players
     const tableCard = game.getCardOnTable();
     this.server.in(game.getId()).emit("tableCard", tableCard);
+  }
+
+  onStream(data: { playerId: string; data: any }) {
+    //we got video stream from client
+    // broadcast to all player in the game except the sender
+    const game = games.find(
+      (game) =>
+        game.getPlayers().filter((p) => p.getId() === data.playerId).length > 0
+    );
+    if (!game) return;
+    const players = game.getPlayers();
+    if (!players) return;
+    const otherPlayers = players.filter(
+      (player) => player.getId() !== data.playerId
+    );
+    for (const player of otherPlayers) {
+      this.server.in(player.getSocketId()).emit("stream", data);
+    }
+  }
+
+  onIceCandidate(iceCandidate: RTCIceCandidate) {
+    //we got ice candidate from client
+    // get related game
+    const game = games.find(
+      (game) =>
+        game.getPlayers().filter((p) => p.getSocketId() === this.socket.id)
+          .length > 0
+    );
+    if (!game) return;
+    // get related player
+    const player = game.getPlayerById(this.socket.id);
+    if (!player) return;
+    // update player ice candidate
+    player.setIceCandidate(iceCandidate);
+
+    // send updated player data to the client
+    this.socket.emit<ClientEvent>(ClientEvent.playerData, player.getData());
+
+    // send updated list of players to all players in the game
+    const players = game.getPlayers();
+    const playerData = players.map((player) =>
+      player.getData({ includeCards: false })
+    );
+    //send the data to the client
+    this.server.in(game.getId()).emit(ClientEvent.players, playerData);
+  }
+
+  onRTCOffer(offer: RTCSessionDescription) {
+    // player sending his RTCOffer (calling to other player)
+    // get related game
+    const game = games.find(
+      (game) =>
+        game.getPlayers().filter((p) => p.getSocketId() === this.socket.id)
+          .length > 0
+    );
+    if (!game) return;
+    // get related player
+    const player = game.getPlayerById(this.socket.id);
+    if (!player) return;
+    // update player offer
+    player.setRTCOffer(offer);
+
+    // send updated player data to the client
+    this.socket.emit<ClientEvent>(ClientEvent.playerData, player.getData());
+
+    // send updated list of players to all players in the game
+    const players = game.getPlayers();
+    const playerData = players.map((player) =>
+      player.getData({ includeCards: false })
+    );
+    //send the data to the client
+    this.server.in(game.getId()).emit(ClientEvent.players, playerData);
+  }
+  onRTCAnswer(answer: RTCSessionDescription) {
+    // player sending his RTCAnswer (answering the call)
+    // get related game
+    const game = games.find(
+      (game) =>
+        game.getPlayers().filter((p) => p.getSocketId() === this.socket.id)
+          .length > 0
+    );
+    if (!game) return;
+    // get related player
+    const player = game.getPlayerById(this.socket.id);
+    if (!player) return;
+    // update player answer
+    player.setRTCAnswer(answer);
+
+    // send updated player data to the client
+    this.socket.emit<ClientEvent>(ClientEvent.playerData, player.getData());
+
+    // send updated list of players to all players in the game
+    const players = game.getPlayers();
+    const playerData = players.map((player) =>
+      player.getData({ includeCards: false })
+    );
+    //send the data to the client
+    this.server.in(game.getId()).emit(ClientEvent.players, playerData);
   }
 }

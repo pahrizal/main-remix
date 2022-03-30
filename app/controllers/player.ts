@@ -5,8 +5,12 @@ export interface PlayerData {
   id: string;
   name: string;
   socketId: string;
-  cards?: Card[];
-  colors?: string;
+  cards: Card[];
+  colors: string;
+  playTurn: boolean;
+  iceCandidate: RTCIceCandidate | null;
+  RTCOffer?: RTCSessionDescriptionInit;
+  RTCAnswer?: RTCSessionDescriptionInit;
 }
 /**
  * This class is used to manage player in the game
@@ -31,8 +35,17 @@ export default class PlayerController {
   setSocketId(socketId: string) {
     this.data.socketId = socketId;
   }
+  setTurn(turn: boolean) {
+    this.data.playTurn = turn;
+  }
   getId() {
     return this.data.id;
+  }
+  setRTCOffer(RTCOffer: RTCSessionDescriptionInit) {
+    this.data.RTCOffer = RTCOffer;
+  }
+  setRTCAnswer(RTCAnswer: RTCSessionDescriptionInit) {
+    this.data.RTCAnswer = RTCAnswer;
   }
   getData(opts?: { includeCards?: boolean }) {
     return opts?.includeCards ? this.data : { ...this.data, cards: [] };
@@ -55,6 +68,12 @@ export default class PlayerController {
       name: "",
       socketId: "",
       cards: [],
+      playTurn: false,
+      iceCandidate: null,
+      colors: "",
     };
+  }
+  setIceCandidate(iceCandidate: RTCIceCandidate) {
+    this.data.iceCandidate = iceCandidate;
   }
 }
