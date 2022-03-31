@@ -478,7 +478,9 @@ export const gameActions = {
             const data = getState().game.data;
             const allPlayers = getState().game.players;
             if (!data) return;
-
+            if (data.playerData.id === playerId) {
+                data.playerData.stream = stream;
+            }
             // add stream to player in players array
             const players = allPlayers.map((player) => {
                 if (player.id === playerId) {

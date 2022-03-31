@@ -80,17 +80,13 @@ const PlayerAvatar: React.FC<Props> = (props) => {
                         }
                     )}
                 >
-                    {props.name ? (
-                        <video
-                            ref={videoRef}
-                            style={{ maxWidth: "unset" }}
-                            title="Double click to change the source"
-                            className={clsx("h-[128px] relative")}
-                            autoPlay
-                        />
-                    ) : (
-                        <p>waiting player</p>
-                    )}
+                    <video
+                        ref={videoRef}
+                        style={{ maxWidth: "unset" }}
+                        title="Double click to change the source"
+                        className={clsx("h-[128px] relative")}
+                        autoPlay
+                    />
                 </div>
                 {props.name && (
                     <div className="absolute items-center justify-center space-x-2 px-2 flex flex-row overflow-hidden -bottom-1 z-10 py-1 border-2 bg-slate-700 font-exo text-lime-500 w-full rounded-xl">
@@ -114,7 +110,7 @@ const PlayerAvatar: React.FC<Props> = (props) => {
                         >
                             {props.name}
                         </p>
-                        {props.me && (
+                        {props.me && props.stream && (
                             <MicrophoneIcon
                                 onClick={() => {
                                     if (props.stream) {
