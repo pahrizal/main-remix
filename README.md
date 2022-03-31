@@ -1,10 +1,10 @@
 # Welcome to main-remix!
 
 a web based playing card game powered by this awesome things:
-- [React](https://reactjs.org/) 
+- [React](https://reactjs.org/)
 - [Typescript](https://www.typescriptlang.org/)
 - [RemixJs](https://remix.run)
-- [Tailwind CSS](https://tailwindcss.com/) 
+- [Tailwind CSS](https://tailwindcss.com/)
 - [Express](https://expressjs.com/)
 - [SocketIO](https://socket.io/)
 - [Deck of Cards](https://deckofcardsapi.com/)
@@ -14,10 +14,10 @@ a web based playing card game powered by this awesome things:
 
 ## Game Rule
 - the game will be limited to max 4 players
-- the game will be using 52 cards and each player will get random `(52 - 1) / players.length` cards, with 1 folded card to the table
+- the game will be using 52 cards and each player will get random `(52 - 1) / players.length` cards, and deal 1 card per turn
 - the first turn will be the game owner
-- the player can fold a card when the last folded card on table is smaller than player card and must be the same suit.
-- you can't play alone 😁, you need a friends to play with, not a bot!, 
+- the player can deal a card when the card on table is smaller than dealed card and must be the same suit.
+- ~~you can't play alone 😁, you need a friends to play with, not a bot!~~ now you can play with 🤖,
 
 ## How to Start a new game
 - Go to [main-remix website](https://main-remix.herokuapp.com)
