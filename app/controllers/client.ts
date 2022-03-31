@@ -215,13 +215,6 @@ export default class ClientController {
                 });
                 // add the bot player to the game
                 game.addPlayer(botPlayer);
-                // get all player in the game
-                const players = game.getPlayers();
-                // map the player data to send to the client
-                const playerData = players.map((player) => player.getData({ includeCards: false }));
-
-                //send the data to the client
-                this.server.in(game.getId()).emit("players", playerData);
             }
 
             // start the game, this will take care of creating the game board
@@ -246,6 +239,12 @@ export default class ClientController {
 
             // broadcast to other players that the game started
             this.server.in(game.getId()).emit("started", game.getData());
+
+            // map the player data to send to the client
+            const playerData = players.map((player) => player.getData({ includeCards: false }));
+
+            //send the data to the client
+            this.server.in(game.getId()).emit("players", playerData);
         }
     }
 
