@@ -39,12 +39,17 @@ const GameResult: React.FC<Props> = (props) => {
             <div
                 className={clsx(
                     "flex flex-col justify-center items-center",
-                    "w-[400px] h-[240px]",
+                    "w-[400px] p-8",
                     "border-2 border-slate-100",
                     "bg-slate-900 text-slate-100 font-exo text-4xl"
                 )}
             >
                 <p className="text-4xl">{props.isTheWinner ? "You won! 🎉🎉🎉" : "You lost! 😭😭😭"}</p>
+                {!props.isTheWinner && (
+                    <p className="text-2xl mt-4 font-virgil">
+                        The winner is <b className="text-lime-500 font-exo">{props.name}</b>
+                    </p>
+                )}
                 <div className="mt-8">
                     <Button
                         onClick={() => {
