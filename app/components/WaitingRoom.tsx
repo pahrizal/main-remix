@@ -2,6 +2,7 @@ import React from "react";
 import { PlayerData } from "~/controllers/player";
 import Button from "~/components/Button";
 import PlayerAvatar from "~/components/playerAvatar";
+import ShareLink from "./ShareLink";
 
 type Props = {
   ownerId?: string;
@@ -18,7 +19,7 @@ const WaitingRoom: React.FC<Props> = ({
   ownerId = "",
   players = [],
   abortText = "Abort!",
-  startText = "Launch the game!",
+  startText = "Launch the game 🚀",
   maxPlayers = 4,
   onAbort,
   onStart,
@@ -27,6 +28,7 @@ const WaitingRoom: React.FC<Props> = ({
   const [disableStart, setDisableStart] = React.useState(false);
   return (
     <div className="flex flex-col z-10 w-screen h-screen backdrop-blur-2xl justify-center items-center">
+      <ShareLink />
       <p className="text-center text-2xl font-exo mb-8">
         {players.length === maxPlayers
           ? `Starting the game, please standby!...`
@@ -40,11 +42,11 @@ const WaitingRoom: React.FC<Props> = ({
             name={player.name}
           />
         ))}
-        {Array(maxPlayers - players.length)
+        {/* {Array(maxPlayers - players.length)
           .fill(0)
           .map((i) => (
             <PlayerAvatar key={i} />
-          ))}
+          ))} */}
       </div>
       <div className="flex flex-row space-x-4 items-center mt-8">
         <Button
@@ -61,7 +63,7 @@ const WaitingRoom: React.FC<Props> = ({
               setDisableStart(true);
             }}
           >
-            {startText}
+            {players.length === 1 ? `Play with our bot 🤖` : startText}
           </Button>
         )}
       </div>
