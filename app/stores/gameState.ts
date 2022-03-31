@@ -17,6 +17,7 @@ export interface GameState {
     currentPlayer: string;
     hasFreeFold: boolean;
     notif: NotificationController | null;
+    winner: PlayerData | null;
 }
 
 export const initialGameState: GameState = {
@@ -29,6 +30,7 @@ export const initialGameState: GameState = {
     currentPlayer: "",
     hasFreeFold: false,
     notif: null,
+    winner: null,
 };
 
 interface GameActionTypes {
@@ -41,6 +43,7 @@ interface GameActionTypes {
     readonly SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER";
     readonly SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD";
     readonly SET_NOTIF: "SET_NOTIF";
+    readonly SET_WINNER: "SET_WINNER";
 }
 
 const GameActionsTypes: GameActionTypes = {
@@ -53,6 +56,7 @@ const GameActionsTypes: GameActionTypes = {
     SET_CURRENT_PLAYER: "SET_CURRENT_PLAYER",
     SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD",
     SET_NOTIF: "SET_NOTIF",
+    SET_WINNER: "SET_WINNER",
 };
 
 interface SetGameData {
@@ -94,6 +98,11 @@ interface SetNotif {
     payload: typeof initialGameState.notif;
 }
 
+interface SetWinner {
+    type: "SET_WINNER";
+    payload: typeof initialGameState.winner;
+}
+
 export type GameActions =
     | SetGameData
     | SetGameNotFound
@@ -103,7 +112,8 @@ export type GameActions =
     | SetTableCard
     | SetGameStatus
     | SetHasFreeFold
-    | SetNotif;
+    | SetNotif
+    | SetWinner;
 
 export const gameActions = {
     //game action to set current player
@@ -387,6 +397,7 @@ export const gameActions = {
             socket.emit("start", gameData);
         };
     },
+
     setNotif: (payload: NotificationController): ThunkAction<GameActions> => {
         return async (dispatch, getState) => {
             dispatch({
@@ -395,10 +406,21 @@ export const gameActions = {
             });
         };
     },
+
     playSound(sound: keyof typeof Sound): ThunkAction<GameActions | SocketActions> {
         return async (dispatch, getState) => {
             const notif = getState().game.notif;
             notif && notif.play(sound);
+        };
+    },
+
+    // redux action to set game winner
+    setWinner: (winner: PlayerData): ThunkAction<GameActions> => {
+        return async (dispatch, getState) => {
+            dispatch({
+                type: GameActionsTypes.SET_WINNER,
+                payload: winner,
+            });
         };
     },
 };
@@ -459,6 +481,12 @@ export const GameReducer: Reducer<GameState, GameActions> = (
                 ...state,
                 notif: action.payload,
             };
+        case GameActionsTypes.SET_WINNER:
+            return {
+                ...state,
+                winner: action.payload,
+            };
+
         default:
             return state;
     }

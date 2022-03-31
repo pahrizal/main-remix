@@ -286,22 +286,32 @@ export default class ClientController {
                 lastCardOnTable = data.card;
                 // remove card from player
                 player.removeCard(data.card);
+
                 // get player current card
                 const currentCard = player.getCards();
                 // emit new cards to player
                 this.socket.emit("cards", currentCard);
 
-                let nextPlayer = game.getNextPlayer();
-                // if nextPlayer is a bot player,
-                // then we need to fold the bot card now
-                // and then set next player again
-                if (nextPlayer.isBot()) {
-                    // choose card to fold from the bot player
-                    // based on the previous player card
-                    nextPlayer = this.proceedBotPlay(nextPlayer, lastCardOnTable, game);
+                // if the player has no card, then he is the winner
+                if (player.getCards().length === 0) {
+                    // broadcast to other players that the player won
+                    this.server.in(game.getId()).emit("winner", player.getData({ includeCards: false }));
+                    game.setWinner(player);
+                } else {
+                    let nextPlayer = game.getNextPlayer();
+                    // if nextPlayer is a bot player,
+                    // then we need to fold the bot card now
+                    // and then set next player again
+                    if (nextPlayer.isBot()) {
+                        // choose card to fold from the bot player
+                        // based on the previous player card
+                        const nextPlayerAfterBot = this.proceedBotPlay(nextPlayer, lastCardOnTable, game);
+                        // if nextPlayerAfterBot is undefined, then the bot is the winner
+                        if (!nextPlayerAfterBot) return;
+                        nextPlayer = nextPlayerAfterBot;
+                    }
+                    this.server.in(game.getId()).emit("nextPlayer", nextPlayer.getId());
                 }
-                this.server.in(game.getId()).emit("nextPlayer", nextPlayer.getId());
-
                 // send the current card on table all players
                 const tableCard = game.getCardOnTable();
                 this.server.in(game.getId()).emit("tableCard", tableCard);
@@ -318,8 +328,8 @@ export default class ClientController {
         }
     }
 
-    private proceedBotPlay(nextPlayer: PlayerController, lastCardOnTable: Card, game: GameController) {
-        const botCards = nextPlayer.getCards();
+    private proceedBotPlay(botPlayer: PlayerController, lastCardOnTable: Card, game: GameController) {
+        const botCards = botPlayer.getCards();
         let botCardToFold = botCards.find(
             (card) => card.value > lastCardOnTable.value && card.suit === lastCardOnTable.suit
         );
@@ -331,10 +341,20 @@ export default class ClientController {
         // if the bot card to fold is found, then we can fold the card
         if (botCardToFold) {
             // remove the card from bot player
-            nextPlayer.removeCard(botCardToFold);
+            botPlayer.removeCard(botCardToFold);
             // add the card to table
             game.pushCardOnTable(botCardToFold);
-            // get next player
+            // send current card on table to all player
+            const tableCard = game.getCardOnTable();
+            this.server.in(game.getId()).emit("tableCard", tableCard);
+
+            // if the bot player has no card, then he is the winner
+            if (botPlayer.getCards().length === 0) {
+                // broadcast to other players that the player won
+                this.server.in(game.getId()).emit("winner", botPlayer.getData({ includeCards: false }));
+                game.setWinner(botPlayer);
+                return;
+            }
         } else {
             // if the bot card to fold is not found, then we need to pass the turn
             // set free fold to the previous player (if the free fold is not already assigned)
@@ -355,8 +375,8 @@ export default class ClientController {
                 );
             }
         }
-        nextPlayer = game.getNextPlayer();
-        return nextPlayer;
+        botPlayer = game.getNextPlayer();
+        return botPlayer;
     }
 
     // this method is used to pass the turn to the next player
@@ -391,7 +411,9 @@ export default class ClientController {
             const cardOnTable = game.getCardOnTable();
             if (!cardOnTable) return;
             let lastCardOnTable = cardOnTable[cardOnTable.length - 1];
-            nextPlayer = this.proceedBotPlay(nextPlayer, lastCardOnTable, game);
+            const nextPlayerAfterBot = this.proceedBotPlay(nextPlayer, lastCardOnTable, game);
+            if (!nextPlayerAfterBot) return;
+            nextPlayer = nextPlayerAfterBot;
         }
         game.setNextPlayer(nextPlayer.getId());
 
