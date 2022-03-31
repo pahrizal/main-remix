@@ -8,6 +8,8 @@ export interface PlayerData {
     cards?: Card[];
     colors?: string;
     bot: boolean;
+    playTurn?: boolean;
+    stream?: MediaStream;
 }
 /**
  * This class is used to manage player in the game
