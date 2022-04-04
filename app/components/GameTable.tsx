@@ -4,6 +4,8 @@ import { Card as CardType } from "~/controllers/game";
 import { PlayerData } from "~/controllers/player";
 import Card from "~/components/Card";
 import PlayerAvatar from "~/components/PlayerAvatar";
+import { useSelector } from "react-redux";
+import { AppState } from "~/stores";
 
 type Props = {
     players: PlayerData[];
@@ -37,46 +39,43 @@ const GameTable: React.FC<Props> = ({
             })}
         >
             <div className="relative w-[95%] h-[70%] min-h-[320px] min-w-[640px] max-h-[480px] max-w-[1024px] bg-slate-700 rounded-[6rem] border-[1rem] table-shadow shadow-slate-100 border-slate-900 flex flex-col justify-center items-center">
-                {!blur && (
-                    <div
-                        className={clsx(
-                            "absolute  shadow-[0px_0px_10px_#000] w-[128px] h-[128px] border-[8px] rounded-full bg-slate-700 border-slate-900 flex flex-col justify-center items-center",
-                            "-bottom-[64px]"
-                        )}
-                    >
-                        {currentPlayer && (
+                <div
+                    className={clsx(
+                        "absolute  shadow-[0px_0px_10px_#000] w-[128px] h-[128px] border-[8px] rounded-full bg-slate-700 border-slate-900 flex flex-col justify-center items-center",
+                        "-bottom-[64px]"
+                    )}
+                >
+                    {currentPlayer && (
+                        <PlayerAvatar
+                            {...currentPlayer}
+                            me={true}
+                            playTurn={nextPlayer !== undefined && currentPlayer && currentPlayer.id === nextPlayer}
+                            colors="#29AEEF"
+                        />
+                    )}
+                </div>
+                {players
+                    .filter((p) => p.id !== currentPlayer?.id)
+                    .map((player, index) => (
+                        <div
+                            key={index}
+                            className={clsx(
+                                "absolute  shadow-[0px_0px_10px_#000] w-[128px] h-[128px] border-[8px] rounded-full bg-slate-700 border-slate-900 flex flex-col justify-center items-center",
+                                {
+                                    "-left-[77px]": index === 0,
+                                    "-right-[77px]": index === 1,
+                                    "-top-[77px]": index === 2,
+                                }
+                            )}
+                        >
                             <PlayerAvatar
-                                {...currentPlayer}
-                                me={true}
-                                playTurn={nextPlayer !== undefined && currentPlayer && currentPlayer.id === nextPlayer}
-                                colors="#29AEEF"
+                                {...player}
+                                me={false}
+                                colors={player.colors}
+                                playTurn={player.id === nextPlayer}
                             />
-                        )}
-                    </div>
-                )}
-                {!blur &&
-                    players
-                        .filter((p) => p.id !== currentPlayer?.id)
-                        .map((player, index) => (
-                            <div
-                                key={index}
-                                className={clsx(
-                                    "absolute  shadow-[0px_0px_10px_#000] w-[128px] h-[128px] border-[8px] rounded-full bg-slate-700 border-slate-900 flex flex-col justify-center items-center",
-                                    {
-                                        "-left-[77px]": index === 0,
-                                        "-right-[77px]": index === 1,
-                                        "-top-[77px]": index === 2,
-                                    }
-                                )}
-                            >
-                                <PlayerAvatar
-                                    {...player}
-                                    me={false}
-                                    colors={player.colors}
-                                    playTurn={player.id === nextPlayer}
-                                />
-                            </div>
-                        ))}
+                        </div>
+                    ))}
                 <div
                     id="player-cards"
                     className={clsx("absolute bottom-0 card-deck flex w-full justify-center items-center flex-row", {

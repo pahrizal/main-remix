@@ -132,7 +132,7 @@ export const socketActions = {
             });
             // listen for freeFold event
             socket.on("winner", (player: PlayerData) => {
-                console.log("winner", player);
+                // console.log("winner", player);
                 gameActions.setWinner(player)(dispatch, getState);
             });
         };

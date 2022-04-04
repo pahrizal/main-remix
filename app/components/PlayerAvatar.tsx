@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { PlayerData } from "~/controllers/player";
 import { AppState } from "~/stores";
@@ -19,6 +19,9 @@ const PlayerAvatar: React.FC<Props> = (props) => {
     const [micEnabled, setMicEnabled] = useState(props.stream ? props.stream.getAudioTracks()[0].enabled : false);
     const [showMediaSelector, setShowMediaSelector] = useState(false);
     const socket = useSelector((state: AppState) => state.socket.client);
+    const gameData = useSelector((state: AppState) => state.game.data?.gameData);
+    const vchat = useSelector((state: AppState) => state.game.videochat);
+    const peers = useSelector((state: AppState) => state.game.peers);
     const videoDeviceId = useSelector((state: AppState) => state.game.videoDeviceId);
     const audioDeviceId = useSelector((state: AppState) => state.game.audioDeviceId);
     React.useEffect(() => {
@@ -41,6 +44,9 @@ const PlayerAvatar: React.FC<Props> = (props) => {
                         stream.getAudioTracks()[0].enabled = false;
                         video.play();
                         dispatch(gameActions.setPlayerStream(props.id, stream));
+                        if (gameData) {
+                            dispatch(gameActions.initVideChatController(stream, socket));
+                        }
                     }
                 })
                 .catch((err) => console.log(err));
@@ -48,9 +54,36 @@ const PlayerAvatar: React.FC<Props> = (props) => {
             if (!socket) return;
             // get remote peer instance with this props.id
             // then set remote peer stream to videoRef
+            const peer = peers[props.socketId];
+            if (peer) {
+                console.log(peer);
+                peer.peer.on("stream", (stream) => {
+                    if (videoRef.current) {
+                        const video = videoRef.current;
+                        video.srcObject = stream;
+                        video.play();
+                    }
+                    socket.on("muteVideo", (data) => {
+                        if (data.playerSocketId === props.socketId) {
+                            stream.getVideoTracks()[0].enabled = data.muted;
+                            if (videoRef.current) {
+                                const video = videoRef.current;
+                                video.muted = data.muted;
+                            }
+                        }
+                    });
+                });
+            }
         }
-    }, [audioDeviceId, videoDeviceId, props.me, props.id, socket]);
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [audioDeviceId, videoDeviceId, gameData, peers]);
+    useEffect(() => {
+        if (videoRef.current && props.stream) {
+            props.stream.getVideoTracks()[0].enabled = cameraEnabled;
+            videoRef.current.muted = cameraEnabled;
+            vchat && vchat.muteMyVideo(cameraEnabled);
+        }
+    }, [cameraEnabled, props.stream, vchat]);
     return (
         <>
             <div className={clsx("relative z-10 h-[128px] text-center flex flex-col justify-center items-center")}>
@@ -74,7 +107,7 @@ const PlayerAvatar: React.FC<Props> = (props) => {
                     className={clsx(
                         "relative w-[128px] h-[128px] rounded-full overflow-hidden flex flex-col items-center justify-center font-virgil z-10 ow text-xl px-4",
                         {
-                            "text-slate-100 animate-pulse bg-slate-700": !props.name || props.playTurn,
+                            "text-slate-100 bg-slate-700": !props.name || props.playTurn,
                             "text-slate-900": props.name,
                             "border-2 border-slite-100": props.me,
                         }
@@ -93,11 +126,7 @@ const PlayerAvatar: React.FC<Props> = (props) => {
                         {props.me && props.stream && (
                             <CameraIcon
                                 onClick={() => {
-                                    if (props.stream) {
-                                        props.stream.getVideoTracks()[0].enabled =
-                                            !props.stream.getVideoTracks()[0].enabled;
-                                        setCameraEnabled(props.stream.getVideoTracks()[0].enabled);
-                                    }
+                                    setCameraEnabled(!cameraEnabled);
                                 }}
                                 className="cursor-pointer"
                                 stroke={cameraEnabled ? "#FFF" : "#FFFFFF22"}
