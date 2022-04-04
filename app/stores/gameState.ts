@@ -314,6 +314,7 @@ export const gameActions = {
     // redux action to set game data
     setGameData: (data: JoinData): ThunkAction<GameActions> => {
         return async (dispatch, getState) => {
+            if (!data.gameData || !data.playerData) return;
             localStorage.setItem(data.gameData.id, JSON.stringify(data));
             dispatch({
                 type: GameActionsTypes.SET_GAME_DATA,

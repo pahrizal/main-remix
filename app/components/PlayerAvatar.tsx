@@ -39,14 +39,16 @@ const PlayerAvatar: React.FC<Props> = (props) => {
                 })
                 .then((stream) => {
                     if (videoRef.current && socket) {
-                        const video = videoRef.current;
-                        video.srcObject = stream;
-                        stream.getAudioTracks()[0].enabled = false;
-                        video.play();
-                        dispatch(gameActions.setPlayerStream(props.id, stream));
-                        if (gameData) {
-                            dispatch(gameActions.initVideChatController(stream, socket));
-                        }
+                        try {
+                            const video = videoRef.current;
+                            video.srcObject = stream;
+                            stream.getAudioTracks()[0].enabled = false;
+                            // video.play();
+                            dispatch(gameActions.setPlayerStream(props.id, stream));
+                            if (gameData) {
+                                dispatch(gameActions.initVideChatController(stream, socket));
+                            }
+                        } catch (error) {}
                     }
                 })
                 .catch((err) => console.log(err));
@@ -56,12 +58,11 @@ const PlayerAvatar: React.FC<Props> = (props) => {
             // then set remote peer stream to videoRef
             const peer = peers[props.socketId];
             if (peer) {
-                console.log(peer);
                 peer.peer.on("stream", (stream) => {
                     if (videoRef.current) {
                         const video = videoRef.current;
                         video.srcObject = stream;
-                        video.play();
+                        // video.play();
                     }
                     socket.on("muteVideo", (data) => {
                         if (data.playerSocketId === props.socketId) {
@@ -78,11 +79,9 @@ const PlayerAvatar: React.FC<Props> = (props) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [audioDeviceId, videoDeviceId, gameData, peers]);
     useEffect(() => {
-        if (videoRef.current && props.stream) {
-            props.stream.getVideoTracks()[0].enabled = cameraEnabled;
-            videoRef.current.muted = cameraEnabled;
-            vchat && vchat.muteMyVideo(cameraEnabled);
-        }
+        if (props.stream) props.stream.getVideoTracks()[0].enabled = cameraEnabled;
+        if (videoRef.current) videoRef.current.style.display = cameraEnabled ? "block" : "none";
+        vchat && vchat.muteMyVideo(cameraEnabled);
     }, [cameraEnabled, props.stream, vchat]);
     return (
         <>
@@ -91,9 +90,9 @@ const PlayerAvatar: React.FC<Props> = (props) => {
                     style={{
                         borderColor: props.name && !props.me ? `${props.colors}` : "inherit",
                     }}
-                    className={clsx("absolute z-0 w-[128px] h-[128px] rounded-full", {
-                        "hover:animate-rubber border-8 border-sky-400 bg-sky-500": props.name && props.me,
-                        "hover:animate-rubber border-8 border-cyan-400 bg-cyan-500": props.name && !props.me,
+                    className={clsx("absolute z-0 w-[128px] h-[128px] rounded-full bg-black", {
+                        "border-8 border-sky-400": props.name && props.me,
+                        "border-8 border-cyan-400 bg-cyan-500": props.name && !props.me,
                         "border-8 border-dashed animate-spin-slow": !props.name || props.playTurn,
                     })}
                 >
@@ -119,6 +118,7 @@ const PlayerAvatar: React.FC<Props> = (props) => {
                         title="Double click to change the source"
                         className={clsx("h-[128px] relative")}
                         autoPlay
+                        playsInline
                     />
                 </div>
                 {props.name && (
