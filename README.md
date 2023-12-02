@@ -8,9 +8,7 @@ a web based playing card game powered by this awesome things:
 - [Express](https://expressjs.com/)
 - [SocketIO](https://socket.io/)
 - [Deck of Cards](https://deckofcardsapi.com/)
-- [Heroku](https://www.heroku.com/)
 - [Docker](https://www.docker.com/)
-- [Github Action - Heroku Deploy](https://github.com/AkhileshNS/heroku-deploy)
 
 ## Game Rule
 - the game will be limited to max 4 players
@@ -20,7 +18,7 @@ a web based playing card game powered by this awesome things:
 - ~~you can't play alone 😁, you need a friends to play with, not a bot!~~ now you can play with 🤖,
 
 ## How to Start a new game
-- Go to [main-remix website](https://main-remix.herokuapp.com)
+- Go to [main-remix demo website](https://main-remix.up.railway.app/)
 - Enter your name and then click **Create a new game** button
 - then share the game URL to your friends
 
