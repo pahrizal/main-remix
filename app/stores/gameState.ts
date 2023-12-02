@@ -6,7 +6,9 @@ import { generateName, preloadImage } from "~/utils/helper";
 import { ThunkAction } from "~/stores";
 import { socketActions, SocketActions } from "~/stores/socketState";
 import { NotificationController, Sound } from "~/controllers/notification.client";
-
+import { PeerData, VideoChatController } from "~/controllers/videochat.client";
+import { Socket } from "socket.io-client";
+import Peer from "simple-peer";
 export interface GameState {
     status: GameStatus;
     data: JoinData | null;
@@ -18,6 +20,10 @@ export interface GameState {
     hasFreeFold: boolean;
     notif: NotificationController | null;
     winner: PlayerData | null;
+    videoDeviceId: string;
+    audioDeviceId: string;
+    videochat: VideoChatController | null;
+    peers: { [key: string]: PeerData };
 }
 
 export const initialGameState: GameState = {
@@ -31,6 +37,10 @@ export const initialGameState: GameState = {
     hasFreeFold: false,
     notif: null,
     winner: null,
+    videoDeviceId: "",
+    audioDeviceId: "",
+    videochat: null,
+    peers: {},
 };
 
 interface GameActionTypes {
@@ -44,6 +54,10 @@ interface GameActionTypes {
     readonly SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD";
     readonly SET_NOTIF: "SET_NOTIF";
     readonly SET_WINNER: "SET_WINNER";
+    readonly SET_VIDEO_DEVICE_ID: "SET_VIDEO_DEVICE_ID";
+    readonly SET_AUDIO_DEVICE_ID: "SET_AUDIO_DEVICE_ID";
+    readonly SET_VIDEOCHAT: "SET_VIDEOCHAT";
+    readonly SET_PEERS: "SET_PEERS";
 }
 
 const GameActionsTypes: GameActionTypes = {
@@ -57,6 +71,10 @@ const GameActionsTypes: GameActionTypes = {
     SET_HAS_FREE_FOLD: "SET_HAS_FREE_FOLD",
     SET_NOTIF: "SET_NOTIF",
     SET_WINNER: "SET_WINNER",
+    SET_VIDEO_DEVICE_ID: "SET_VIDEO_DEVICE_ID",
+    SET_AUDIO_DEVICE_ID: "SET_AUDIO_DEVICE_ID",
+    SET_VIDEOCHAT: "SET_VIDEOCHAT",
+    SET_PEERS: "SET_PEERS",
 };
 
 interface SetGameData {
@@ -103,6 +121,26 @@ interface SetWinner {
     payload: typeof initialGameState.winner;
 }
 
+interface SetVideoDeviceId {
+    type: "SET_VIDEO_DEVICE_ID";
+    payload: typeof initialGameState.videoDeviceId;
+}
+
+interface SetAudioDeviceId {
+    type: "SET_AUDIO_DEVICE_ID";
+    payload: typeof initialGameState.audioDeviceId;
+}
+
+interface SetVideoChat {
+    type: "SET_VIDEOCHAT";
+    payload: typeof initialGameState.videochat;
+}
+
+interface SetPeers {
+    type: "SET_PEERS";
+    payload: typeof initialGameState.peers;
+}
+
 export type GameActions =
     | SetGameData
     | SetGameNotFound
@@ -113,7 +151,11 @@ export type GameActions =
     | SetGameStatus
     | SetHasFreeFold
     | SetNotif
-    | SetWinner;
+    | SetWinner
+    | SetVideoDeviceId
+    | SetAudioDeviceId
+    | SetVideoChat
+    | SetPeers;
 
 export const gameActions = {
     //game action to set current player
@@ -192,11 +234,23 @@ export const gameActions = {
     setPlayers: (players: PlayerData[]): ThunkAction<GameActions | SocketActions> => {
         return async (dispatch, getState) => {
             const notif = getState().game.notif;
+            const oldPlayers = getState().game.players;
             // play notification
             notif && notif.play("join");
+            // update player data, but don't update already existing stream
+            const newPlayers = players.map((player) => {
+                const oldPlayer = oldPlayers.find((oldPlayer) => oldPlayer.id === player.id);
+                if (oldPlayer) {
+                    return {
+                        ...player,
+                        stream: oldPlayer.stream,
+                    };
+                }
+                return player;
+            });
             dispatch({
                 type: GameActionsTypes.SET_PLAYERS,
-                payload: players,
+                payload: newPlayers,
             });
         };
     },
@@ -260,6 +314,7 @@ export const gameActions = {
     // redux action to set game data
     setGameData: (data: JoinData): ThunkAction<GameActions> => {
         return async (dispatch, getState) => {
+            if (!data.gameData || !data.playerData) return;
             localStorage.setItem(data.gameData.id, JSON.stringify(data));
             dispatch({
                 type: GameActionsTypes.SET_GAME_DATA,
@@ -423,6 +478,80 @@ export const gameActions = {
             });
         };
     },
+
+    setAudioDeviceId: (audioId: string): ThunkAction<GameActions> => {
+        return async (dispatch, getState) => {
+            dispatch({
+                type: GameActionsTypes.SET_AUDIO_DEVICE_ID,
+                payload: audioId,
+            });
+        };
+    },
+    setVideoDeviceId: (videoId: string): ThunkAction<GameActions> => {
+        return async (dispatch, getState) => {
+            dispatch({
+                type: GameActionsTypes.SET_VIDEO_DEVICE_ID,
+                payload: videoId,
+            });
+        };
+    },
+
+    setPlayerStream: (playerId: string, stream: MediaStream): ThunkAction<GameActions> => {
+        return async (dispatch, getState) => {
+            const data = getState().game.data;
+            const allPlayers = getState().game.players;
+            if (!data) return;
+            if (data.playerData.id === playerId) {
+                data.playerData.stream = stream;
+            }
+            // add stream to player in players array
+            const players = allPlayers.map((player) => {
+                if (player.id === playerId) {
+                    return {
+                        ...player,
+                        stream,
+                    };
+                }
+                return player;
+            });
+            dispatch({
+                type: GameActionsTypes.SET_PLAYERS,
+                payload: players,
+            });
+        };
+    },
+
+    initVideChatController: (stream: MediaStream, socket: Socket): ThunkAction<GameActions> => {
+        return async (dispatch, getState) => {
+            const oldController = getState().game.videochat;
+            const gameData = getState().game.data?.gameData;
+            if (!oldController) {
+                if (!gameData) return;
+                const controller = new VideoChatController(
+                    gameData.id,
+                    stream,
+                    socket,
+                    (peers: { [key: string]: PeerData }) => {
+                        gameActions.setPeers(peers)(dispatch, getState);
+                    }
+                );
+                dispatch({
+                    type: GameActionsTypes.SET_VIDEOCHAT,
+                    payload: controller,
+                });
+            } else {
+                oldController.myStream = stream;
+            }
+        };
+    },
+    setPeers: (peers: { [key: string]: PeerData }): ThunkAction<GameActions> => {
+        return async (dispatch, getState) => {
+            dispatch({
+                type: GameActionsTypes.SET_PEERS,
+                payload: peers,
+            });
+        };
+    },
 };
 
 export const GameReducer: Reducer<GameState, GameActions> = (
@@ -486,7 +615,26 @@ export const GameReducer: Reducer<GameState, GameActions> = (
                 ...state,
                 winner: action.payload,
             };
-
+        case GameActionsTypes.SET_AUDIO_DEVICE_ID:
+            return {
+                ...state,
+                audioDeviceId: action.payload,
+            };
+        case GameActionsTypes.SET_VIDEO_DEVICE_ID:
+            return {
+                ...state,
+                videoDeviceId: action.payload,
+            };
+        case GameActionsTypes.SET_VIDEOCHAT:
+            return {
+                ...state,
+                videochat: action.payload,
+            };
+        case GameActionsTypes.SET_PEERS:
+            return {
+                ...state,
+                peers: action.payload,
+            };
         default:
             return state;
     }

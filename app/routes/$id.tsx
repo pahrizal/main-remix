@@ -120,16 +120,20 @@ const GameScreen = () => {
                         hasFreeFold={hasFreeFold}
                         onFold={handleFold}
                     />
-                    <Toolbar
-                        blur={
-                            gameStatus === GameStatus.WAITING &&
-                            data.status === GameStatus.WAITING &&
-                            cards.length === 0
-                        }
-                        canPass={dataState?.playerData.id === currentPlayer}
-                        onLeave={() => setShowAlert(true)}
-                        onPass={() => dispatch(gameActions.passToNextPlayer())}
-                    />
+                    {gameStatus === GameStatus.WAITING && data.status === GameStatus.WAITING && cards.length === 0 ? (
+                        <></>
+                    ) : (
+                        <Toolbar
+                            blur={
+                                gameStatus === GameStatus.WAITING &&
+                                data.status === GameStatus.WAITING &&
+                                cards.length === 0
+                            }
+                            canPass={dataState?.playerData.id === currentPlayer}
+                            onLeave={() => setShowAlert(true)}
+                            onPass={() => dispatch(gameActions.passToNextPlayer())}
+                        />
+                    )}
                     <Alert show={showAlert} onCancel={() => setShowAlert(false)} onConfirm={handleLeave}>
                         <p>Are you sure want to leave the game now?</p>
                     </Alert>

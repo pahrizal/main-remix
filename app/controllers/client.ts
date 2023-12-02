@@ -4,8 +4,10 @@ import { clients } from "~/controllers/connection";
 import GameController, { Card, GameData, games } from "~/controllers/game";
 import PlayerController, { PlayerData } from "~/controllers/player";
 import { v4 as uuidv4 } from "uuid";
+import Peer from "simple-peer";
 
 export type ClientEvent = "join" | "joined" | "leave" | "left";
+
 export interface JoinData {
     gameData: GameData;
     playerData: PlayerData;
@@ -39,6 +41,40 @@ export default class ClientController {
         socket.on("start", this.start.bind(this));
         socket.on("foldCard", this.foldCard.bind(this));
         socket.on("passToNextPlayer", this.passToNextPlayer.bind(this));
+        socket.on("join video chat", this.onJoinVideoChat.bind(this));
+        socket.on("sending signal", this.onSendingSignal.bind(this));
+        socket.on("returning signal", this.onReturningSignal.bind(this));
+        socket.on("muteVideo", this.onMuteVideo.bind(this));
+    }
+    onMuteVideo(data: { gameId: string; muted: boolean }) {
+        printLog("info", this.socket.id, "mute his video:", data.muted);
+        this.server.in(data.gameId).emit("muteVideo", { muted: data.muted, playerSocketId: this.socket.id });
+    }
+    onReturningSignal(payload: { callerId: string; signal: Peer.SignalData }) {
+        printLog("info", this.socket.id, "returning his signal to", payload.callerId);
+        this.server
+            .to(payload.callerId)
+            .emit("receiving returned signal", { signal: payload.signal, id: this.socket.id });
+    }
+    onSendingSignal(data: { callerId: string; remoteId: string; signal: Peer.SignalData }) {
+        printLog("info", data.callerId, " sending his signal to ", data.remoteId);
+        this.server.to(data.remoteId).emit("joined video chat", {
+            signal: data.signal,
+            callerId: data.callerId,
+        });
+    }
+    onJoinVideoChat(gameId: string) {
+        printLog("info", "onJoinVideoChat", "getting game#", gameId);
+        // get the game currently played by this client
+        const game = games.find((game) => game.getId() === gameId);
+        let playerSockets: string[] = [];
+        if (game) {
+            playerSockets = game
+                .getPlayers()
+                .filter((p) => p.getSocketId() !== this.socket.id)
+                .map((p) => p.getSocketId());
+        }
+        this.socket.emit("peer list", playerSockets);
     }
     /**
      * This method is used to disconnect the socket connection
