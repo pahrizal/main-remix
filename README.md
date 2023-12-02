@@ -23,7 +23,7 @@ a web based playing card game powered by this awesome things:
 - then share the game URL to your friends
 
 ## How to join a game
-- Go to [main-remix website](https://main-remix.herokuapp.com)
+- Go to [main-remix demo website](https://main-remix.up.railway.app/)
 - Enter your name and the game ID shared by your friend
 - then click the **JOIN** button
 - or if your friend shared the game link, just open it! 😁
