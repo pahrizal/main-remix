@@ -1,4 +1,0 @@
-[deploy]
-startCommand = "yarn install && yarn build && yarn start"
-healthcheckTimeout = 100
-restartPolicyType = "never"
