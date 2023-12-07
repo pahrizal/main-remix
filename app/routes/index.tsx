@@ -45,6 +45,7 @@ export default function Index() {
         // if player name is empty, set focus the input
         if (!playerName) {
             playerNameRef.current?.focus();
+            alert("Enter a player name to create a new game");
             return;
         }
         dispatch(gameActions.create(playerName));
