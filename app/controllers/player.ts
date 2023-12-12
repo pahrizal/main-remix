@@ -55,10 +55,11 @@ export default class PlayerController {
     isBot() {
         return this.data.bot;
     }
+    
     /**
      * This function sorts cards first by suite then by value
      * @param cards 
-     * @returns 
+     * @returns cards
      */
     sortHand(cards: Card[]){
         cards = cards?.sort(function(a, b){
@@ -66,11 +67,13 @@ export default class PlayerController {
             if(a.suit == b.suit){
                     return a.value - b.value;
             }
+            
             // Otherwise, sort by suite char code
             return a.suit.charCodeAt(0) - b.suit.charCodeAt(0);
         });
-        return cards
+        return cards;
     }
+    
     leave() {
         this.data = {
             id: "",
