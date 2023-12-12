@@ -41,7 +41,7 @@ export default class PlayerController {
         return opts?.includeCards ? this.data : { ...this.data, cards: [] };
     }
     setCards(cards: Card[]) {
-        this.data.cards = cards;
+        this.data.cards = this.sortHand(cards);
     }
     removeCard(card: Card) {
         if (!this.data.cards) return;
@@ -55,7 +55,22 @@ export default class PlayerController {
     isBot() {
         return this.data.bot;
     }
-
+    /**
+     * This function sorts cards first by suite then by value
+     * @param cards 
+     * @returns 
+     */
+    sortHand(cards: Card[]){
+        cards = cards?.sort(function(a, b){
+            // If the suite is the same, then sort by value
+            if(a.suit == b.suit){
+                    return a.value - b.value;
+            }
+            // Otherwise, sort by suite char code
+            return a.suit.charCodeAt(0) - b.suit.charCodeAt(0);
+        });
+        return cards
+    }
     leave() {
         this.data = {
             id: "",
