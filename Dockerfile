@@ -1,4 +1,4 @@
-FROM node:17
+FROM node:16
 WORKDIR /web
 COPY app/ app/
 COPY public/ public/
