@@ -18,12 +18,12 @@ a web based playing card game powered by this awesome things:
 - ~~you can't play alone 😁, you need a friends to play with, not a bot!~~ now you can play with 🤖,
 
 ## How to Start a new game
-- Go to [main-remix demo website](https://main-remix.up.railway.app/)
+- Go to [main-remix demo website](https://mainremi.pahrizal.dev)
 - Enter your name and then click **Create a new game** button
 - then share the game URL to your friends
 
 ## How to join a game
-- Go to [main-remix demo website](https://main-remix.up.railway.app/)
+- Go to [main-remix demo website](https://mainremi.pahrizal.dev)
 - Enter your name and the game ID shared by your friend
 - then click the **JOIN** button
 - or if your friend shared the game link, just open it! 😁
